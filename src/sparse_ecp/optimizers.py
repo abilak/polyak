@@ -140,13 +140,23 @@ class ECP:
     rejection_growth: int = 1000
     proposal: str = "support_first"
     name: str = "sparse_ecp"
-    max_total_proposals: int = 5_000_000
+    # This is a computational safety guard, not an evaluation-budget parameter.
+    # Slow-growth ablations (notably tau=1.001) can validly exceed five million
+    # cheap proposals before completing 300 expensive evaluations.
+    max_total_proposals: int = 50_000_000
 
     def run(self, space: OracleSpace, budget: int, seed: int) -> OptimizationTrace:
         if budget < 1:
             raise ValueError("budget must be positive")
-        if self.epsilon0 <= 0 or self.rejection_growth < 1:
-            raise ValueError("epsilon0 and rejection_growth must be positive")
+        if (
+            self.epsilon0 <= 0
+            or self.rejection_growth < 1
+            or self.max_total_proposals < budget
+        ):
+            raise ValueError(
+                "epsilon0/rejection_growth must be positive and the proposal cap "
+                "must cover the evaluation budget"
+            )
         rng = np.random.default_rng(seed)
         epsilon = float(self.epsilon0)
         intrinsic_dimension = int(getattr(space, "intrinsic_dimension", space.dimension))
@@ -171,16 +181,25 @@ class ECP:
         while len(trace.values) < budget:
             rejected_since_growth = 0
             proposals_this_evaluation = 0
+            # The accepted history is constant throughout this rejection loop.
+            # Materializing it once avoids millions of identical allocations in
+            # the slow-tolerance ablations.
+            x_hist = np.asarray(x_history)
+            y_hist = np.asarray(y_history)
+            best_y = float(np.max(y_hist))
             while True:
                 if total_proposals >= self.max_total_proposals:
-                    raise RuntimeError("ECP proposal cap reached; increase epsilon0/tau or proposal cap")
+                    raise RuntimeError(
+                        "ECP proposal cap reached "
+                        f"after {len(trace.values)}/{budget} evaluations, "
+                        f"{total_proposals:,} proposals, and epsilon={epsilon:.6g}; "
+                        "increase max_total_proposals or use a faster tolerance schedule"
+                    )
                 candidate = space.sample(rng, self.proposal, evaluated)
                 proposals_this_evaluation += 1
                 total_proposals += 1
-                x_hist = np.asarray(x_history)
-                y_hist = np.asarray(y_history)
                 distances = np.linalg.norm(x_hist - candidate.x, axis=1)
-                accepted = float(np.min(y_hist + epsilon * distances)) >= float(np.max(y_hist))
+                accepted = float(np.min(y_hist + epsilon * distances)) >= best_y
                 if accepted:
                     _record(trace, space, candidate, proposals_this_evaluation, epsilon)
                     if candidate.key is not None:
@@ -259,18 +278,25 @@ class ReplicatedECP:
     rejection_growth: int = 1000
     proposal: str = "support_first"
     name: str = "noisy_sparse_ecp"
-    max_total_proposals: int = 5_000_000
+    max_total_proposals: int = 50_000_000
 
     def run(self, space: OracleSpace, budget: int, seed: int) -> OptimizationTrace:
         if self.replications < 1 or self.sigma < 0:
             raise ValueError("replications must be positive and sigma nonnegative")
         if not 0 < self.delta < 1:
             raise ValueError("delta must lie in (0,1)")
-        if self.epsilon0 <= 0 or self.rejection_growth < 1:
-            raise ValueError("epsilon0 and rejection_growth must be positive")
         designs = budget // self.replications
         if designs < 1:
             raise ValueError("budget must fund at least one replicated design")
+        if (
+            self.epsilon0 <= 0
+            or self.rejection_growth < 1
+            or self.max_total_proposals < designs
+        ):
+            raise ValueError(
+                "epsilon0/rejection_growth must be positive and the proposal cap "
+                "must cover the design budget"
+            )
         rng = np.random.default_rng(seed)
         intrinsic = int(getattr(space, "intrinsic_dimension", space.dimension))
         effective_tau = self.tau or max(1.001, 1.0 + 1.0 / (designs * intrinsic))
@@ -304,16 +330,23 @@ class ReplicatedECP:
         while len(trace.values) < designs:
             rejected_since_growth = 0
             proposals_this_evaluation = 0
+            x_hist = np.asarray(x_history)
+            observed_hist = np.asarray(observed_history)
+            lower_incumbent = float(np.max(observed_hist - beta))
             while True:
                 if total_proposals >= self.max_total_proposals:
-                    raise RuntimeError("noisy ECP proposal cap reached")
+                    raise RuntimeError(
+                        "noisy ECP proposal cap reached "
+                        f"after {len(trace.values)}/{designs} designs, "
+                        f"{total_proposals:,} proposals, and epsilon={epsilon:.6g}; "
+                        "increase max_total_proposals or use a faster tolerance schedule"
+                    )
                 candidate = space.sample(rng, self.proposal, evaluated)
                 proposals_this_evaluation += 1
                 total_proposals += 1
-                distances = np.linalg.norm(np.asarray(x_history) - candidate.x, axis=1)
-                lower_incumbent = float(np.max(np.asarray(observed_history) - beta))
+                distances = np.linalg.norm(x_hist - candidate.x, axis=1)
                 accepted = float(
-                    np.min(np.asarray(observed_history) + beta + epsilon * distances)
+                    np.min(observed_hist + beta + epsilon * distances)
                 ) >= lower_incumbent
                 if accepted:
                     latent = float(space.evaluate(candidate))

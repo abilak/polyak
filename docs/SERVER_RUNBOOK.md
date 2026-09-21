@@ -7,6 +7,12 @@ runners do not use CUDA, so reserving a GPU does not make these experiments fast
 CPU-heavy node when the scheduler permits it. Eight experiment workers are a safe starting
 point; GP-UCB can make larger worker counts memory-intensive.
 
+ECP's rejected candidates are cheap proposals rather than black-box evaluations. The runner
+allows up to 50 million cumulative proposals per method/seed job so that deliberately slow
+settings such as the `tau=1.001` ablation are not incorrectly terminated by the computational
+safety guard. These arms can take much longer than the main `tau=1.01` setting; this proposal
+cost is itself an ablation outcome.
+
 ## One-time setup and verification
 
 From the repository root:

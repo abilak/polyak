@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sparse_ecp.domains import SparseBall
 from sparse_ecp.objectives import SparseCone
@@ -14,6 +15,19 @@ def test_ecp_consumes_exact_evaluation_budget_and_tracks_proposals():
     assert len(trace.proposals) == 12
     assert sum(trace.proposals) >= 12
     assert np.all(trace.to_frame(true_max=0.0)["simple_regret"] >= 0)
+
+
+def test_ecp_proposal_cap_reports_partial_progress():
+    center = np.array([0.5, 0.0, 0.0])
+    oracle = ContinuousOracle(SparseBall(3, 1), SparseCone(center), true_max=0.0)
+    optimizer = ECP(
+        epsilon0=1e-9,
+        tau=1.0001,
+        rejection_growth=1000,
+        max_total_proposals=3,
+    )
+    with pytest.raises(RuntimeError, match=r"after \d+/3 evaluations, 3 proposals"):
+        optimizer.run(oracle, 3, seed=3)
 
 
 def test_finite_oracle_never_repeats_evaluated_candidates():

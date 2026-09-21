@@ -149,7 +149,14 @@ def _run_synthetic_job(job: _SyntheticJob) -> pd.DataFrame:
                 supports=[center_support] if job.support_mode == "known" else None,
             )
         oracle = ContinuousOracle(domain, objective, true_max=objective.maximum)
-        trace = make_optimizer(name, options).run(oracle, job.max_budget, job.seed)
+        try:
+            trace = make_optimizer(name, options).run(oracle, job.max_budget, job.seed)
+        except RuntimeError as error:
+            raise RuntimeError(
+                f"synthetic job failed: algorithm={_algorithm_label(job.algorithm_spec, name)}, "
+                f"objective={job.objective_name}, support_mode={job.support_mode}, "
+                f"dimension={job.dimension}, sparsity={job.sparsity}, seed={job.seed}: {error}"
+            ) from error
         trace.algorithm = _algorithm_label(job.algorithm_spec, name)
         frame = trace.to_frame(true_max=objective.maximum)
         frame["experiment"] = "synthetic_scaling"
