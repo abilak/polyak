@@ -1,0 +1,32 @@
+output_dir: results/synthetic_benchmark_100
+workers: auto
+dimensions: [8, 16, 32]
+sparsities: [1, 2, 3, 4]
+budgets: [25, 50, 100, 300]
+seed_count: 100
+radius: 1.0
+lipschitz: 1.0
+objectives: [cone, quadratic, rastrigin, ackley, griewank, levy, salomon]
+support_modes: [unknown, known]
+algorithms:
+  - name: sparse_ecp
+    domain: sparse
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: support_random
+    domain: sparse
+  - name: space_filling
+    domain: sparse
+    options: {pool_size: 2048}
+  - name: gp_ucb
+    domain: sparse
+    options: {initial_points: 10, pool_size: 5000, refit_interval: 5}
+  - name: ecp_hard_threshold
+    domain: hard_threshold
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: hard_threshold_random
+    domain: hard_threshold
+  - name: dense_ecp
+    domain: dense
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: dense_random
+    domain: dense

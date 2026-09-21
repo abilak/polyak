@@ -1,0 +1,18 @@
+dataset: matbench_steels_yield_strength
+workers: 1
+prepared_data: data/processed/matbench_steels.csv
+output_dir: results/matbench_steels
+budget: 200
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+task_ids: all
+algorithms:
+  - name: sparse_ecp
+    options: {epsilon0: 25.0, tau: 1.03, rejection_growth: 30}
+  - support_random
+  - random
+  - name: ecp_uniform
+    options: {epsilon0: 25.0, tau: 1.03, rejection_growth: 30}
+  - name: space_filling
+    options: {pool_size: 512}
+  - name: gp_ucb
+    options: {initial_points: 8, pool_size: 512, refit_interval: 10}

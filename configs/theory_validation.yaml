@@ -1,0 +1,54 @@
+output_dir: results/theory_validation
+
+# Main-paper noiseless battery. One hundred paired repetitions matches the
+# repetition count in the ECP paper while varying sparse geometry explicitly.
+noiseless:
+  dimensions: [8, 16, 32]
+  sparsities: [1, 2, 3, 4]
+  upper_sparsity: 6
+  budgets: [50, 100, 200, 400, 800]
+  seed_count: 100
+  radius: 1.0
+  lipschitz: 1.0
+  epsilon0: 1.0
+  tau: 1.01
+  rejection_threshold: 1000
+  delta: 0.05
+  proposal_modes: [known_support, exact_unknown, uniform_adaptive, complexity_adaptive]
+  filter_diagnostics:
+    target_regret: 0.25
+    samples: 2000
+    stride: 10
+
+# The dense optimum has polynomially decaying coordinates; the experiment
+# checks the simultaneous oracle tradeoff over r=1,...,s.
+approximate_sparsity:
+  dimension: 16
+  max_sparsity: 6
+  budgets: [100, 250, 500, 1000, 2000]
+  seed_count: 100
+  coefficient_decay: 1.5
+  radius: 1.0
+  lipschitz: 1.0
+  epsilon0: 1.0
+  tau: 1.01
+  rejection_threshold: 1000
+  delta: 0.05
+
+# Known-support runs isolate the stochastic exponent N^{-1/(s+2)}; unknown-
+# support runs test the stochastic support factor. The multiscale method tests
+# adaptation to the unknown geometry/noise balance in Theorem 22.
+noisy:
+  dimension: 12
+  sparsities: [1, 2, 3, 4]
+  budgets: [128, 256, 512, 1024, 2048, 4096]
+  seed_count: 100
+  sigma: 0.25
+  known_support: [true, false]
+  multiscale: true
+  radius: 1.0
+  lipschitz: 1.0
+  epsilon0: 1.0
+  tau: 1.01
+  rejection_threshold: 1000
+  delta: 0.05

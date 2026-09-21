@@ -1,0 +1,59 @@
+datasets:
+  synergyfinder_examples:
+    mode: direct
+    url: https://bioc.r-universe.dev/src/contrib/synergyfinder_3.21.0.tar.gz
+    contents:
+      - NCATS_screening_data
+      - ONEIL_screening_data
+      - mathews_screening_data
+    note: Package examples only; NCATS has two representative triple-drug blocks.
+  malaria_pairwise:
+    mode: legacy_unavailable
+    url: https://tripod.nih.gov/matrix-client/
+    paper: https://pmc.ncbi.nlm.nih.gov/articles/PMC4585899/
+    note: The cited Matrix endpoint now redirects to the general NCATS site. Supply a saved project export to the generic preparer; this repository does not claim to have recovered the full screen.
+  malaria_pair_scores:
+    mode: direct
+    url: https://raw.githubusercontent.com/richlewis42/synergy-maps/5c5a4d97aeba6286283adcddc311808de6d82e97/backend/synergy_maps/examples/NCATS-Malaria/combinations.csv
+    source: https://github.com/richlewis42/synergy-maps
+    note: Paper-linked processed support-level metrics for 1,162 QC-retained pairs among 56 compounds; not the missing 6x6 dose-response matrices.
+  nci_almanac_growth:
+    mode: direct
+    url: https://ftp.mcs.anl.gov/pub/candle/public/benchmarks/Pilot1/combo/ComboDrugGrowth_Nov2017.csv
+    canonical_url: https://wiki.nci.nih.gov/download/attachments/338237347/ComboDrugGrowth_Nov2017.zip
+    paper: https://pmc.ncbi.nlm.nih.gov/articles/PMC5499996/
+    note: Full dose-level growth archive used for retrospective assay simulation.
+  nci_almanac_combo_scores:
+    mode: direct
+    url: https://discover.nci.nih.gov/cellminer/download/processeddataset/DTP_NCI60_ALMANAC_COMBO_SCORE.zip
+    note: Pair-level ComboScores; useful for support discovery but not within-support dose optimization.
+  oneil_full:
+    mode: source_request
+    paper: https://pubmed.ncbi.nlm.nih.gov/26983881/
+    note: The public SynergyFinder package contains two representative blocks, not the full 583-pair screen.
+  matbench_steels:
+    mode: direct
+    url: https://ml.materialsproject.org/projects/matbench_steels.json.gz
+    sha256: 473bc4957b2ea5e6465aef84bc29bb48ac34db27d69ea4ec5f508745c6fae252
+    samples: 312
+    property: experimental yield strength in MPa
+  matbench_expt_gap:
+    mode: direct
+    url: https://ml.materialsproject.org/projects/matbench_expt_gap.json.gz
+    sha256: 783e7d1461eb83b00b2f2942da4b95fda5e58a0d1ae26b581c24cf8a82ca75b2
+    samples: 4604
+    property: experimental band gap in eV
+  matbench_perovskites:
+    mode: direct
+    url: https://ml.materialsproject.org/projects/matbench_perovskites.json.gz
+    sha256: 4641e2417f8ec8b50096d2230864468dfa08278dc9d257c327f65d0305278483
+    samples: 18928
+    property: computed formation energy in eV per unit cell
+  cads_ocm:
+    mode: direct_with_source_terms
+    source: https://cads.eng.hokudai.ac.jp/datamanagement/datasources/21010bbe-0a5c-4d12-a5fa-84eea540e4be/
+    sha256: b942693b1269abb2113f1ab5c82f798ff68d44b66aadf1b7f99e565a7cb905b2
+    samples: 12708
+    catalysts: 59
+    property: C2 yield
+    redistribution: prohibited by source page

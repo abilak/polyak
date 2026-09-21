@@ -1,0 +1,18 @@
+dataset: nci_almanac_d12_panels
+workers: 2
+prepared_data: data/processed/almanac_panels/almanac_panels_d12.csv
+output_dir: results/nci_almanac_d12_panels
+budget: 250
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19]
+task_ids: all
+algorithms:
+  - name: sparse_ecp
+    options: {epsilon0: 1.0, tau: 1.01, rejection_growth: 100}
+  - support_random
+  - random
+  - name: ecp_uniform
+    options: {epsilon0: 1.0, tau: 1.01, rejection_growth: 100}
+  - name: space_filling
+    options: {pool_size: 3000}
+  - name: gp_ucb
+    options: {initial_points: 8, pool_size: 3000, refit_interval: 5}

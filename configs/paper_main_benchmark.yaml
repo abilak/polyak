@@ -1,0 +1,35 @@
+output_dir: results/paper_main_benchmark
+workers: auto
+
+# 5 landscapes x 3 ambient dimensions x 2 sparsities = 30 sparse problems,
+# each repeated 100 times, matching the problem/repetition scale of ECP.
+dimensions: [8, 16, 32]
+sparsities: [1, 2]
+budgets: [25, 50, 100, 300]
+seed_count: 100
+radius: 1.0
+lipschitz: 1.0
+objectives: [cone, rastrigin, ackley, griewank, levy]
+support_modes: [unknown]
+algorithms:
+  - name: sparse_ecp
+    domain: sparse
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: support_random
+    domain: sparse
+  - name: space_filling
+    domain: sparse
+    options: {pool_size: 1024}
+  - name: gp_ucb
+    domain: sparse
+    options: {initial_points: 10, pool_size: 2000, refit_interval: 10}
+  - name: ecp_hard_threshold
+    domain: hard_threshold
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: hard_threshold_random
+    domain: hard_threshold
+  - name: dense_ecp
+    domain: dense
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: dense_random
+    domain: dense

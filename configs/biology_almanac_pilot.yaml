@@ -1,0 +1,19 @@
+dataset: nci_almanac_d8_pilot
+workers: 2
+prepared_data: data/processed/almanac_panels/almanac_panels_d8.csv
+output_dir: results/nci_almanac_d8_pilot
+budget: 50
+seeds: [0, 1]
+task_ids: all
+max_tasks: 3
+algorithms:
+  - name: sparse_ecp
+    options: {epsilon0: 1.0, tau: 1.02, rejection_growth: 50}
+  - support_random
+  - random
+  - name: ecp_uniform
+    options: {epsilon0: 1.0, tau: 1.02, rejection_growth: 50}
+  - name: space_filling
+    options: {pool_size: 512}
+  - name: gp_ucb
+    options: {initial_points: 6, pool_size: 512, refit_interval: 5}

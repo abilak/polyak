@@ -1,0 +1,20 @@
+output_dir: results/ecp_hyperparameter_ablation_smoke
+workers: 2
+dimensions: [6]
+sparsities: [2]
+budgets: [8, 12]
+seeds: [0, 1]
+objectives: [cone]
+support_modes: [unknown]
+algorithms:
+  - name: sparse_ecp
+    label: ecp/epsilon_0.01
+    options: {epsilon0: 0.01, tau: 1.1, rejection_growth: 20}
+  - name: sparse_ecp
+    label: ecp/tau_1.5
+    options: {epsilon0: 0.01, tau: 1.5, rejection_growth: 20}
+  - name: sparse_ecp
+    label: ecp/C_1
+    options: {epsilon0: 0.01, tau: 1.1, rejection_growth: 1}
+  - name: support_random
+    label: sparse_random

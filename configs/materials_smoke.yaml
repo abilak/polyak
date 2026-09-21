@@ -1,0 +1,18 @@
+dataset: matbench_steels_smoke
+workers: 1
+prepared_data: data/processed/matbench_steels.csv
+output_dir: results/matbench_steels_smoke
+budget: 30
+seeds: [0, 1]
+task_ids: all
+algorithms:
+  - name: sparse_ecp
+    options: {epsilon0: 25.0, tau: 1.05, rejection_growth: 20}
+  - support_random
+  - random
+  - name: ecp_uniform
+    options: {epsilon0: 25.0, tau: 1.05, rejection_growth: 20}
+  - name: space_filling
+    options: {pool_size: 128}
+  - name: gp_ucb
+    options: {initial_points: 4, pool_size: 128, refit_interval: 5}

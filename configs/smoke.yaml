@@ -1,0 +1,25 @@
+output_dir: results/smoke_synthetic
+workers: auto
+dimensions: [6]
+sparsities: [1, 2]
+budgets: [10, 20, 30]
+seeds: [0, 1]
+radius: 1.0
+lipschitz: 1.0
+objectives: [cone]
+support_modes: [unknown, known]
+algorithms:
+  - name: sparse_ecp
+    domain: sparse
+    options: {epsilon0: 0.05, tau: 1.1, rejection_growth: 20}
+  - name: support_random
+    domain: sparse
+  - name: space_filling
+    domain: sparse
+    options: {pool_size: 128}
+  - name: gp_ucb
+    domain: sparse
+    options: {initial_points: 4, pool_size: 128}
+  - name: ecp_hard_threshold
+    domain: hard_threshold
+    options: {epsilon0: 0.05, tau: 1.1, rejection_growth: 20}

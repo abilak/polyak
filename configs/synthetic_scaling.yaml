@@ -1,0 +1,33 @@
+output_dir: results/synthetic_scaling
+workers: auto
+dimensions: [8, 12]
+sparsities: [1, 2, 3]
+budgets: [25, 50, 100, 200]
+seeds: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+radius: 1.0
+lipschitz: 1.0
+objectives: [cone, quadratic, rastrigin, ackley, griewank, levy, salomon]
+support_modes: [unknown, known]
+algorithms:
+  - name: sparse_ecp
+    domain: sparse
+    options:
+      epsilon0: 0.01
+      tau: 1.01
+      rejection_growth: 200
+  - name: support_random
+    domain: sparse
+  - name: space_filling
+    domain: sparse
+    options:
+      pool_size: 512
+  - name: gp_ucb
+    domain: sparse
+    options:
+      pool_size: 1000
+  - name: ecp_hard_threshold
+    domain: hard_threshold
+    options:
+      epsilon0: 0.01
+      tau: 1.01
+      rejection_growth: 200

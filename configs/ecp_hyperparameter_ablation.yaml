@@ -1,0 +1,53 @@
+output_dir: results/ecp_hyperparameter_ablation
+workers: auto
+dimensions: [8, 16]
+sparsities: [2, 4]
+budgets: [25, 50, 100, 300]
+seed_count: 100
+radius: 1.0
+lipschitz: 1.0
+objectives: [cone, ackley, rastrigin, levy]
+support_modes: [unknown]
+algorithms:
+  # epsilon_1 ablation; tau and C fixed.
+  - name: sparse_ecp
+    label: ecp/epsilon_0.001
+    options: {epsilon0: 0.001, tau: 1.01, rejection_growth: 1000}
+  - name: sparse_ecp
+    label: ecp/epsilon_0.01
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - name: sparse_ecp
+    label: ecp/epsilon_0.1
+    options: {epsilon0: 0.1, tau: 1.01, rejection_growth: 1000}
+  - name: sparse_ecp
+    label: ecp/epsilon_1.0
+    options: {epsilon0: 1.0, tau: 1.01, rejection_growth: 1000}
+
+  # tau ablation; epsilon_1 and C fixed.
+  - name: sparse_ecp
+    label: ecp/tau_1.001
+    options: {epsilon0: 0.01, tau: 1.001, rejection_growth: 1000}
+  - name: sparse_ecp
+    label: ecp/tau_1.05
+    options: {epsilon0: 0.01, tau: 1.05, rejection_growth: 1000}
+  - name: sparse_ecp
+    label: ecp/tau_1.1
+    options: {epsilon0: 0.01, tau: 1.1, rejection_growth: 1000}
+
+  # Rejection patience C ablation. C=1 removes nearly all filtering gain;
+  # large C tests the evaluation/proposal tradeoff in Theorems 9 and 11.
+  - name: sparse_ecp
+    label: ecp/C_1
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1}
+  - name: sparse_ecp
+    label: ecp/C_10
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 10}
+  - name: sparse_ecp
+    label: ecp/C_100
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 100}
+  - name: sparse_ecp
+    label: ecp/C_5000
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 5000}
+
+  - name: support_random
+    label: sparse_random

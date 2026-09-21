@@ -1,0 +1,39 @@
+output_dir: results/theory_validation_smoke
+
+noiseless:
+  dimensions: [6]
+  sparsities: [1, 2]
+  upper_sparsity: 3
+  budgets: [12, 24]
+  seeds: [0, 1]
+  radius: 1.0
+  lipschitz: 1.0
+  epsilon0: 1.0
+  tau: 1.1
+  rejection_threshold: 20
+  proposal_modes: [known_support, exact_unknown, uniform_adaptive, complexity_adaptive]
+  filter_diagnostics:
+    target_regret: 0.5
+    samples: 128
+    stride: 3
+
+approximate_sparsity:
+  dimension: 6
+  max_sparsity: 3
+  budgets: [12, 24]
+  seeds: [0, 1]
+  epsilon0: 1.0
+  tau: 1.1
+  rejection_threshold: 20
+
+noisy:
+  dimension: 4
+  sparsities: [1, 2]
+  budgets: [32, 64]
+  seeds: [0, 1]
+  sigma: 0.2
+  known_support: true
+  multiscale: true
+  epsilon0: 1.0
+  tau: 1.1
+  rejection_threshold: 20

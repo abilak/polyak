@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sparse-ecp-experiments"
+version = "0.1.0"
+description = "Corrected support-first Sparse ECP and reproducible sparse black-box optimization experiments"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy>=1.24",
+  "scipy>=1.10",
+  "pandas>=2.0",
+  "matplotlib>=3.7",
+  "scikit-learn>=1.3",
+  "threadpoolctl>=3.1",
+  "PyYAML>=6.0",
+  "requests>=2.31",
+  "openpyxl>=3.1",
+]
+
+[project.urls]
+Repository = "https://github.com/abilak/polyak"
+
+[project.optional-dependencies]
+data = ["pyreadr>=0.5"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+sparse-ecp = "sparse_ecp.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
