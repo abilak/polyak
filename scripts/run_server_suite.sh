@@ -36,6 +36,11 @@ run_theory() {
     --config configs/theory_validation.yaml
 }
 
+run_theory_rate_followup() {
+  .venv/bin/sparse-ecp theory-experiments \
+    --config configs/theory_rate_followup.yaml
+}
+
 run_benchmark() {
   .venv/bin/sparse-ecp synthetic \
     --config configs/paper_main_benchmark.yaml \
@@ -77,6 +82,9 @@ case "$phase" in
   theory)
     run_theory
     ;;
+  theory-rate-followup)
+    run_theory_rate_followup
+    ;;
   benchmark)
     run_benchmark
     ;;
@@ -98,7 +106,7 @@ case "$phase" in
     run_real_data
     ;;
   *)
-    echo "usage: $0 {setup|verify|theory|benchmark|benchmark-extended|ablation|real|all}" >&2
+    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|real|all}" >&2
     exit 2
     ;;
 esac

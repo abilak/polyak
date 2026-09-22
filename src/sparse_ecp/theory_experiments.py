@@ -194,6 +194,7 @@ def _run_noiseless(
     diagnostic_samples = int(diagnostics.get("samples", 1000))
     diagnostic_stride = int(diagnostics.get("stride", 5))
     target_regret = float(diagnostics.get("target_regret", 0.25))
+    save_trajectories = bool(section.get("save_trajectories", True))
     max_budget = max(budgets)
     trajectory_frames: list[pd.DataFrame] = []
     endpoint_records: list[dict[str, Any]] = []
@@ -251,7 +252,8 @@ def _run_noiseless(
                         frame["true_sparsity"] = true_sparsity
                         frame["upper_sparsity"] = upper_sparsity
                         frame["seed"] = seed
-                        trajectory_frames.append(frame)
+                        if save_trajectories:
+                            trajectory_frames.append(frame)
                         for budget in budgets:
                             row = frame.iloc[budget - 1]
                             theory_bound = _finite_regret_bound(
@@ -332,7 +334,11 @@ def _run_noiseless(
                                     }
                                 )
 
-    trajectories = pd.concat(trajectory_frames, ignore_index=True)
+    trajectories = (
+        pd.concat(trajectory_frames, ignore_index=True)
+        if trajectory_frames
+        else pd.DataFrame()
+    )
     return (
         trajectories,
         pd.DataFrame.from_records(endpoint_records),
@@ -642,88 +648,116 @@ def run_theory_validation(config_path: str | Path) -> dict[str, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     paths: dict[str, Path] = {}
 
-    noiseless, endpoints, filters, proposals = _run_noiseless(dict(config.get("noiseless", {})))
-    for label, frame in {
-        "noiseless_trajectories": noiseless,
-        "noiseless_endpoints": endpoints,
-        "filter_diagnostics": filters,
-        "proposal_complexity": proposals,
-    }.items():
-        path = output_dir / f"{label}.csv"
-        frame.to_csv(path, index=False)
-        paths[label] = path
+    noiseless_section = dict(config.get("noiseless", {}))
+    if noiseless_section.get("enabled", True):
+        noiseless, endpoints, filters, proposals = _run_noiseless(noiseless_section)
+        for label, frame in {
+            "noiseless_trajectories": noiseless,
+            "noiseless_endpoints": endpoints,
+            "filter_diagnostics": filters,
+            "proposal_complexity": proposals,
+        }.items():
+            if frame.empty and label == "noiseless_trajectories":
+                continue
+            path = output_dir / f"{label}.csv"
+            frame.to_csv(path, index=False)
+            paths[label] = path
 
-    noiseless_slopes = _slope_summary(
-        endpoints,
-        budget_column="budget",
-        regret_column="simple_regret",
-        group_columns=["dimension", "true_sparsity", "proposal_mode", "algorithm"],
-        theory_exponent=lambda record: -1.0 / float(record["true_sparsity"]),
-    )
-    path = output_dir / "noiseless_slopes.csv"
-    noiseless_slopes.to_csv(path, index=False)
-    paths["noiseless_slopes"] = path
-    paths["noiseless_plot"] = plot_theory_scaling(
-        endpoints, output_dir / "noiseless_scaling.png"
-    )
-    if not filters.empty:
-        filters = filters.copy()
-        filters["acceptance_mass_bin"] = pd.cut(
-            filters["acceptance_mass"],
-            bins=[0.0, 0.1, 0.25, 0.5, 0.75, 1.0],
-            include_lowest=True,
-        ).astype(str)
-        calibration = filters.groupby("acceptance_mass_bin", observed=True).agg(
-            histories=("target_hit", "size"),
-            acceptance_mass=("acceptance_mass", "mean"),
-            empirical_success=("target_hit", "mean"),
-            theorem_lower=("predicted_success_lower", "mean"),
-        ).reset_index()
-    else:
-        calibration = pd.DataFrame()
-    calibration_path = output_dir / "filter_calibration.csv"
-    calibration.to_csv(calibration_path, index=False)
-    paths["filter_calibration"] = calibration_path
-    if not calibration.empty:
-        paths["filter_plot"] = plot_filter_calibration(
-            calibration, output_dir / "filter_gain.png"
+        noiseless_slopes = _slope_summary(
+            endpoints,
+            budget_column="budget",
+            regret_column="simple_regret",
+            group_columns=["dimension", "true_sparsity", "proposal_mode", "algorithm"],
+            theory_exponent=lambda record: -1.0 / float(record["true_sparsity"]),
         )
-    paths["proposal_plot"] = plot_proposal_complexity(
-        proposals, output_dir / "proposal_complexity.png"
-    )
+        path = output_dir / "noiseless_slopes.csv"
+        noiseless_slopes.to_csv(path, index=False)
+        paths["noiseless_slopes"] = path
+        paths["noiseless_plot"] = plot_theory_scaling(
+            endpoints, output_dir / "noiseless_scaling.png"
+        )
+        if not filters.empty:
+            filters = filters.copy()
+            filters["acceptance_mass_bin"] = pd.cut(
+                filters["acceptance_mass"],
+                bins=[0.0, 0.1, 0.25, 0.5, 0.75, 1.0],
+                include_lowest=True,
+            ).astype(str)
+            calibration = filters.groupby("acceptance_mass_bin", observed=True).agg(
+                histories=("target_hit", "size"),
+                acceptance_mass=("acceptance_mass", "mean"),
+                empirical_success=("target_hit", "mean"),
+                theorem_lower=("predicted_success_lower", "mean"),
+            ).reset_index()
+        else:
+            calibration = pd.DataFrame()
+        calibration_path = output_dir / "filter_calibration.csv"
+        calibration.to_csv(calibration_path, index=False)
+        paths["filter_calibration"] = calibration_path
+        if not calibration.empty:
+            paths["filter_plot"] = plot_filter_calibration(
+                calibration, output_dir / "filter_gain.png"
+            )
+        if not proposals.empty:
+            paths["proposal_plot"] = plot_proposal_complexity(
+                proposals, output_dir / "proposal_complexity.png"
+            )
+    else:
+        endpoints = pd.DataFrame()
+        proposals = pd.DataFrame()
 
-    approximate = _run_approximate(dict(config.get("approximate_sparsity", {})))
-    approximate_path = output_dir / "approximate_sparsity.csv"
-    approximate.to_csv(approximate_path, index=False)
-    paths["approximate_sparsity"] = approximate_path
+    approximate_section = dict(config.get("approximate_sparsity", {}))
+    if approximate_section.get("enabled", True):
+        approximate = _run_approximate(approximate_section)
+        approximate_path = output_dir / "approximate_sparsity.csv"
+        approximate.to_csv(approximate_path, index=False)
+        paths["approximate_sparsity"] = approximate_path
+    else:
+        approximate = pd.DataFrame()
 
-    noisy = _run_noisy(dict(config.get("noisy", {})))
-    noisy_path = output_dir / "noisy_endpoints.csv"
-    noisy.to_csv(noisy_path, index=False)
-    paths["noisy_endpoints"] = noisy_path
-    noisy_slopes = _slope_summary(
-        noisy,
-        budget_column="oracle_budget",
-        regret_column="recommendation_regret",
-        group_columns=["sparsity", "known_support", "algorithm"],
-        theory_exponent=lambda record: -1.0 / (float(record["sparsity"]) + 2.0),
-    )
-    noisy_slope_path = output_dir / "noisy_slopes.csv"
-    noisy_slopes.to_csv(noisy_slope_path, index=False)
-    paths["noisy_slopes"] = noisy_slope_path
-    paths["noisy_plot"] = plot_noisy_scaling(noisy, output_dir / "noisy_scaling.png")
+    noisy_section = dict(config.get("noisy", {}))
+    if noisy_section.get("enabled", True):
+        noisy = _run_noisy(noisy_section)
+        noisy_path = output_dir / "noisy_endpoints.csv"
+        noisy.to_csv(noisy_path, index=False)
+        paths["noisy_endpoints"] = noisy_path
+        noisy_slopes = _slope_summary(
+            noisy,
+            budget_column="oracle_budget",
+            regret_column="recommendation_regret",
+            group_columns=["sparsity", "known_support", "algorithm"],
+            theory_exponent=lambda record: -1.0 / (float(record["sparsity"]) + 2.0),
+        )
+        noisy_slope_path = output_dir / "noisy_slopes.csv"
+        noisy_slopes.to_csv(noisy_slope_path, index=False)
+        paths["noisy_slopes"] = noisy_slope_path
+        paths["noisy_plot"] = plot_noisy_scaling(noisy, output_dir / "noisy_scaling.png")
+    else:
+        noisy = pd.DataFrame()
 
     coverage_records = []
-    for study, frame, indicator in [
-        (
-            "noiseless",
-            endpoints[endpoints["algorithm"].str.startswith("sparse_ecp")],
-            "within_theory_bound",
-        ),
-        ("approximate_sparsity", approximate, "within_oracle_bound"),
-        ("noisy", noisy[noisy["algorithm"] == "noisy_sparse_ecp"], "within_theory_bound"),
-        ("proposal_complexity", proposals, "within_high_probability_bound"),
-    ]:
+    studies = []
+    if not endpoints.empty:
+        studies.append(
+            (
+                "noiseless",
+                endpoints[endpoints["algorithm"].str.startswith("sparse_ecp")],
+                "within_theory_bound",
+            )
+        )
+    if not approximate.empty:
+        studies.append(("approximate_sparsity", approximate, "within_oracle_bound"))
+    if not noisy.empty:
+        studies.append(
+            (
+                "noisy",
+                noisy[noisy["algorithm"] == "noisy_sparse_ecp"],
+                "within_theory_bound",
+            )
+        )
+    if not proposals.empty:
+        studies.append(("proposal_complexity", proposals, "within_high_probability_bound"))
+    for study, frame, indicator in studies:
         coverage_records.append(
             {
                 "study": study,

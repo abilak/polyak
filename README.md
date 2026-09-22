@@ -66,6 +66,18 @@ The full run produces separate noiseless, filtering, sparsity-adaptation,
 approximate-sparsity, noisy, and proposal-complexity tables plus figures and a compact coverage
 summary. The smoke configuration is an engineering check only.
 
+After reviewing the completed full battery, the only unresolved empirical claim was precise
+finite-budget convergence to the asymptotic exponents. The targeted, endpoint-only follow-up
+extends the tractable `s=2,3` noisy regimes and the `s=2,3,4` noiseless regimes without
+rerunning the already decisive oracle-bound study:
+
+```bash
+./scripts/run_server_suite.sh theory-rate-followup
+```
+
+This follow-up is needed only if the manuscript makes an empirical rate-matching claim. The
+finite-bound coverage claims are already evaluated by the full battery.
+
 The manuscript-ready experiment section is in `docs/PAPER_EXPERIMENTS.md`; the shorter
 preregistered protocol is in `docs/EXPERIMENTS.md`.
 
@@ -76,7 +88,8 @@ sparse-ecp synthetic --config configs/ecp_hyperparameter_ablation.yaml
 ```
 
 For a Linux compute server, `scripts/run_server_suite.sh` provides setup, verification,
-theory, benchmark, ablation, and real-data phases. These implementations are CPU-bound;
+theory, targeted rate follow-up, benchmark, ablation, and real-data phases. These
+implementations are CPU-bound;
 the current NumPy/SciPy/scikit-learn stack does not use the GPU.
 
 All experiment runners parallelize independent task/seed/algorithm runs with

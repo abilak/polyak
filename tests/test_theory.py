@@ -9,6 +9,7 @@ from sparse_ecp.theory import (
     sparse_ecp_upper_bound,
     structured_ecp_upper_bound,
 )
+from sparse_ecp.theory_experiments import _run_noiseless
 
 
 def test_full_dimension_recovers_n_to_minus_one_over_d_rate():
@@ -75,3 +76,20 @@ def test_noisy_and_proposal_bounds_report_finite_components():
         rejection_threshold=20,
     )
     assert proposals.high_probability >= proposals.expected
+
+
+def test_noiseless_endpoint_only_mode_skips_large_trajectory_table():
+    trajectories, endpoints, _, _ = _run_noiseless(
+        {
+            "dimensions": [2],
+            "sparsities": [1],
+            "upper_sparsity": 1,
+            "budgets": [2, 3],
+            "seed_count": 1,
+            "proposal_modes": ["known_support"],
+            "save_trajectories": False,
+        }
+    )
+
+    assert trajectories.empty
+    assert len(endpoints) == 4

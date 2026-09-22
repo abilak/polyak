@@ -1,0 +1,50 @@
+output_dir: results/theory_rate_followup
+
+# Targeted follow-up to the completed 100-seed theorem battery. This is not a
+# second omnibus study: it extends only the finite-budget regimes whose fitted
+# exponents had not stabilized. Endpoint-only output avoids another multi-GB
+# trajectory table.
+noiseless:
+  dimensions: [16, 32]
+  sparsities: [2, 3, 4]
+  upper_sparsity: 4
+  budgets: [100, 200, 400, 800, 1600]
+  seed_count: 50
+  radius: 1.0
+  lipschitz: 1.0
+  epsilon0: 1.0
+  tau: 1.01
+  rejection_threshold: 1000
+  delta: 0.05
+  proposal_modes: [known_support, exact_unknown]
+  save_trajectories: false
+  filter_diagnostics:
+    target_regret: 0.25
+    samples: 500
+    stride: 50
+
+# The completed 500-run oracle-bound study already had 100% coverage and a
+# median bound/regret ratio of 1.37 at its largest budget, so do not rerun it.
+approximate_sparsity:
+  enabled: false
+
+# The full run showed that high-noise, high-sparsity filtering was effectively
+# inactive at the original budgets. Extend the tractable known-support s=2,3
+# cases to larger oracle budgets; unknown-support dependence is isolated by the
+# noiseless factorial above. Thirty paired seeds are sufficient for this
+# diagnostic follow-up and keep its quadratic history checks computationally
+# feasible.
+noisy:
+  dimension: 12
+  sparsities: [2, 3]
+  budgets: [1024, 2048, 4096, 8192, 16384]
+  seed_count: 30
+  sigma: 0.25
+  known_support: [true]
+  multiscale: true
+  radius: 1.0
+  lipschitz: 1.0
+  epsilon0: 1.0
+  tau: 1.01
+  rejection_threshold: 1000
+  delta: 0.05

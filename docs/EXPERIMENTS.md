@@ -93,6 +93,13 @@ winners. Bootstrap intervals describe repeated-run uncertainty and are not corre
 Independent runs may execute in separate processes. Each worker limits nested numerical
 libraries to one thread. Parallelism may change wall time but not job ordering or seeds.
 
+The preregistered 100-seed theorem battery remains the primary coverage experiment. The
+separate `configs/theory_rate_followup.yaml` is a targeted diagnostic motivated by inspecting
+that battery: it extends only the tractable regimes whose finite-budget slopes had not
+stabilized, uses 50 paired noiseless seeds and 30 paired noisy seeds, and suppresses the large
+per-query trajectory export. It must be labeled as a follow-up rather than silently pooled
+with the preregistered run.
+
 ## 7. Interpretation rules
 
 - Historical-oracle results estimate ranking/query efficiency on existing tables; they are

@@ -69,18 +69,66 @@ proposal cost. Increasing `epsilon_1` from 0.01 to 1.0 reduced mean proposals pe
 (`C=1` or `10`) reduced proposals further but materially worsened regret. The ablation therefore
 exposes a genuine statistical-computational frontier rather than a universally best parameter.
 
-## Theorem-suite smoke check
+## Full theorem-validation battery
 
-The small configuration in `configs/theory_validation_smoke.yaml` completed end to end. It
-covered 32 noiseless finite-bound endpoints, four approximate-sparsity endpoints, eight noisy
-ECP endpoints, and eight proposal-complexity endpoints; every observed value was within its
-corresponding conservative high-probability bound. The filtering diagnostic retained 22
-eligible histories and its mean empirical next-query target-hit rate exceeded the mean
-Theorem 9 lower bound in the reported acceptance-mass bin.
+The preregistered 100-seed configuration completed without missing or duplicate endpoint
+rows. It produced 48,000 noiseless endpoints (24,000 Sparse ECP), 500 approximate-sparsity
+endpoints, 14,400 noisy endpoints (4,800 Sparse ECP bound checks), 6,000 proposal-complexity
+checks, and 59,697 eligible filtering histories. The only absent numeric entries are the
+intentional bound fields for the multiscale noisy method, for which this experiment does not
+compute a finite-sample bound.
 
-This is an engineering validation with two seeds and two budgets. Its fitted slopes are noisy
-and are not scientific evidence for the asymptotic exponents. The 100-seed preregistered
-configuration is `configs/theory_validation.yaml` and remains distinct from this smoke run.
+| Study | Successful checks | Empirical coverage |
+|---|---:|---:|
+| Noiseless Sparse ECP | 23,999 / 24,000 | 99.9958% |
+| Noiseless, nontrivial local-bound rows only | 10,499 / 10,500 | 99.9905% |
+| Approximate-sparsity oracle inequality | 500 / 500 | 100% |
+| Noisy Sparse ECP | 4,800 / 4,800 | 100% |
+| Proposal high-probability bound | 6,000 / 6,000 | 100% |
+
+The lone miss was the complexity-adaptive proposal at `d=16`, `s=1`, seed 47, and budget
+800: regret 0.2296 versus bound 0.2057. This is compatible with a 95% high-probability claim.
+Coverage should not be oversold: 13,500 of the 24,000 noiseless ECP checks were still in the
+global-diameter fallback regime. Among the 10,500 rows where the local rate bound was active,
+only that one row missed.
+
+The dimension control behaved as predicted qualitatively. At budget 800, known-support
+median regret was nearly invariant to ambient dimension, whereas exact-unknown-support regret
+increased with `d`. For example, with `s=2` it rose from 0.134 at `d=8` to 0.274 at `d=32`,
+while the known-support medians were 0.00571 and 0.00522. Complexity-adaptive size weights
+beat uniform size weights at the final budget for every tested sparsity.
+
+The finite-budget slopes do not uniformly establish the asymptotic exponents. All 48
+noiseless Sparse ECP slopes were negative, but exact-unknown-support median slopes for
+`s=1,2,3,4` were -1.183, -0.290, -0.186, and -0.147 against references -1, -0.5, -0.333,
+and -0.25. The noisy base method matched closely for unknown-support `s=1` (-0.321 versus
+-0.333) and known-support `s=2` (-0.261 versus -0.25), but several higher-sparsity slopes
+were shallower. Moreover, base noisy ECP and sparse random search were exactly identical at
+all recorded endpoints for unknown-support `s=2,3,4`, and at more than 99.6% of endpoints for
+known-support `s=3,4`. The confidence correction makes filtering effectively inactive in
+those finite-budget regimes. These outcomes support conservative coverage and monotone
+improvement, not a blanket empirical claim that every asymptotic exponent has been reached.
+
+The filtering diagnostic is consistent with Theorem 9 but imbalanced. Across all histories,
+the empirical next-query target-hit rate was 0.1122% versus a mean lower bound of 0.1006%.
+A cluster bootstrap over `(d,s,seed)` put their difference at -0.0131 to 0.0386 percentage
+points. Two acceptance-mass bins had empirical means below the lower-bound mean, but neither
+deficit was resolved statistically: one contained only five histories, and the other had 317
+histories with a cluster-bootstrap difference interval of -2.05 to 1.10 percentage points.
+The plot now displays bin counts so these sparse bins cannot be mistaken for equally precise
+evidence.
+
+The approximate-sparsity bound became substantially tighter with budget while retaining full
+coverage: at budget 2,000, median regret was 0.358, the median oracle bound was 0.489, and the
+median bound/regret ratio was 1.37. Proposal complexity also had full coverage but was highly
+conservative and heavy-tailed. At budget 800, the median observed count was 809 proposals
+against a median high-probability bound of 419,108; the 99th percentile was 106,087 and the
+maximum observed/bound ratio over all budgets was 0.162.
+
+Because the primary coverage questions are answered, adding more omnibus seeds would be
+wasteful. `configs/theory_rate_followup.yaml` instead extends the tractable regimes whose
+rate estimates had not stabilized. It is a post-review diagnostic and must remain separate
+from the preregistered full battery.
 
 ## NCATS triple-combination example
 

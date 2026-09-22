@@ -6,7 +6,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 from matplotlib import pyplot as plt
-from matplotlib.ticker import ScalarFormatter
+from matplotlib.ticker import NullFormatter, ScalarFormatter
 
 matplotlib.use("Agg")
 
@@ -179,7 +179,13 @@ def plot_filter_calibration(calibration: pd.DataFrame, output: str | Path) -> Pa
     x = np.arange(len(calibration))
     axis.plot(x, calibration["empirical_success"], marker="o", label="Empirical next-query success")
     axis.plot(x, calibration["theorem_lower"], marker="s", label="Theorem 9 lower bound")
-    axis.set_xticks(x, calibration["acceptance_mass_bin"], rotation=25, ha="right")
+    labels = [
+        f"{interval}\n(n={histories:,})"
+        for interval, histories in zip(
+            calibration["acceptance_mass_bin"], calibration["histories"], strict=True
+        )
+    ]
+    axis.set_xticks(x, labels, rotation=25, ha="right")
     axis.set_xlabel("Estimated acceptance-mass bin")
     axis.set_ylabel("Target-hit probability")
     axis.set_title("ECP filtering-gain calibration")
@@ -222,22 +228,53 @@ def plot_proposal_complexity(results: pd.DataFrame, output: str | Path) -> Path:
 def plot_noisy_scaling(results: pd.DataFrame, output: str | Path) -> Path:
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    figure, axis = plt.subplots(figsize=(6.8, 4.8))
-    for (sparsity, algorithm), frame in results.groupby(["sparsity", "algorithm"]):
-        medians = frame.groupby("oracle_budget")["recommendation_regret"].median()
-        axis.loglog(
-            medians.index,
-            np.maximum(medians.values, 1e-12),
-            marker="o",
-            label=f"s={sparsity}, {algorithm}",
-        )
-    axis.set_xlabel("Noisy oracle calls")
-    axis.set_ylabel("Median recommendation regret")
-    axis.set_title("Noisy sparse optimization scaling")
-    axis.grid(True, which="both", alpha=0.2)
-    axis.set_xticks(sorted(results["oracle_budget"].unique()))
-    axis.xaxis.set_major_formatter(ScalarFormatter())
-    axis.legend(frameon=False, fontsize=8)
+    support_modes = sorted(results["known_support"].dropna().unique(), reverse=True)
+    figure, axes = plt.subplots(
+        1,
+        len(support_modes),
+        figsize=(6.6 * len(support_modes), 4.8),
+        sharey=True,
+        squeeze=False,
+    )
+    short_names = {
+        "noisy_sparse_ecp": "Sparse ECP",
+        "noisy_support_random": "Sparse random",
+        "noisy_multiscale_ecp": "Multiscale ECP",
+    }
+    line_styles = {
+        "noisy_sparse_ecp": ("--", "s"),
+        "noisy_support_random": (":", "^"),
+        "noisy_multiscale_ecp": ("-", "o"),
+    }
+    sparsities = sorted(results["sparsity"].unique())
+    sparsity_colors = {
+        sparsity: plt.get_cmap("tab10")(index)
+        for index, sparsity in enumerate(sparsities)
+    }
+    budgets = sorted(results["oracle_budget"].unique())
+    for column, known_support in enumerate(support_modes):
+        axis = axes[0, column]
+        selected = results[results["known_support"] == known_support]
+        for (sparsity, algorithm), frame in selected.groupby(["sparsity", "algorithm"]):
+            medians = frame.groupby("oracle_budget")["recommendation_regret"].median()
+            label = f"s={sparsity}, {short_names.get(str(algorithm), algorithm)}"
+            linestyle, marker = line_styles.get(str(algorithm), ("-", "o"))
+            axis.loglog(
+                medians.index,
+                np.maximum(medians.values, 1e-12),
+                color=sparsity_colors[sparsity],
+                linestyle=linestyle,
+                marker=marker,
+                label=label,
+            )
+        axis.set_xlabel("Noisy oracle calls")
+        axis.set_title("Known support" if known_support else "Unknown support")
+        axis.grid(True, which="both", alpha=0.2)
+        axis.set_xticks(budgets, labels=[str(value) for value in budgets], rotation=30)
+        axis.xaxis.set_minor_formatter(NullFormatter())
+        axis.legend(frameon=False, fontsize=7, ncol=2)
+    axes[0, 0].set_ylabel("Median recommendation regret")
+    figure.suptitle("Noisy sparse optimization scaling")
     figure.tight_layout()
     figure.savefig(output, dpi=220)
     plt.close(figure)
