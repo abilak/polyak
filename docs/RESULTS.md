@@ -4,6 +4,71 @@ These results verify the implementation and provide preliminary evidence only.  
 and O'Neil package objects are small illustrative subsets, and the ALMANAC pilots use too
 few panels/seeds for scientific claims.  The preregistered full configurations are separate.
 
+## Main synthetic benchmark
+
+The full main benchmark completed all 24,000 preregistered runs: 30 sparse problems formed by
+five objectives, three ambient dimensions, and two sparsity levels; eight algorithms; and 100
+paired seeds. There were no duplicate, missing, nonfinite, or truncated run summaries.
+
+| Algorithm | Mean rank over 30 tasks | Task wins | Median final regret | Mean proposals/query |
+|---|---:|---:|---:|---:|
+| Sparse ECP | **1.67** | **15** | **0.0818** | 2,054 |
+| GP-UCB | 2.90 | 13 | 0.1889 | 1,933 |
+| Hard-threshold ECP | 2.97 | 2 | 0.1737 | 2,145 |
+| Support-balanced random | 4.00 | 0 | 0.2849 | **1** |
+| Maximin space filling | 4.10 | 0 | 0.2390 | 1,021 |
+| Hard-threshold random | 5.37 | 0 | 0.4833 | **1** |
+| Dense ECP | 7.27 | 0 | 2.1745 | 1,714 |
+| Dense random | 7.73 | 0 | 2.3183 | **1** |
+
+Paired same-seed comparisons support three conclusions. Sparse ECP beat both dense methods on
+all 30 tasks with 95% bootstrap intervals excluding zero in every task, showing that exploiting
+sparsity is essential. It beat support-balanced random search on 28 of 30 tasks, significantly
+on 26, showing a benefit from ECP filtering beyond the support-first proposal alone. It beat the
+hard-threshold ECP heuristic on 27 tasks, significantly on 20; the heuristic significantly won
+one task. The comparison with GP-UCB was mixed: Sparse ECP won 17 tasks and GP-UCB won 13, with
+ten significant wins for each and ten inconclusive comparisons.
+
+The GP-UCB comparison depends strongly on intrinsic sparsity. Sparse ECP won 12 of the 15
+`s=1` tasks but only three of the 15 `s=2` tasks. This is an important qualification: the
+benchmark supports Sparse ECP as the best overall method in this collection, not uniform
+dominance over GP-UCB.
+
+The fitted Sparse ECP budget slope was negative in all 30 settings. For `s=1`, the median slope
+was -2.31 against the asymptotic minimax exponent -1; for `s=2`, it was -0.375 against -0.5.
+These finite-budget objective-dependent slopes are broadly consistent with decreasing regret,
+but the main benchmark alone should not be presented as a precise validation of the minimax
+exponent. The dedicated theorem battery is the appropriate source for that claim.
+
+## ECP hyperparameter ablation
+
+The full ablation completed all 19,200 runs: 16 problems, 12 parameter/method conditions, and
+100 paired seeds. The most conservative tolerance growth, `tau=1.001`, ranked first on every
+problem and was significantly better than the `epsilon_1=0.01`, `tau=1.01`, `C=1000` baseline
+on all 16. Its computational cost was also extreme: a mean 22,621 proposals per accepted
+evaluation, versus 2,100 for the baseline.
+
+| Setting | Mean rank | Task wins | Median final regret | Mean proposals/query |
+|---|---:|---:|---:|---:|
+| `tau=1.001` | **1.00** | **16** | **0.2339** | 22,621 |
+| `C=5000` | 3.69 | 0 | 0.4928 | 10,412 |
+| `epsilon_1=0.01` (baseline) | 4.25 | 0 | 0.5394 | 2,100 |
+| `epsilon_1=0.1` | 4.50 | 0 | 0.5605 | 1,327 |
+| `epsilon_1=0.001` | 4.50 | 0 | 0.5470 | 2,871 |
+| `epsilon_1=1.0` | 6.09 | 0 | 0.5663 | 578 |
+| `C=100` | 6.31 | 0 | 0.6534 | 215 |
+| `C=10` | 7.56 | 0 | 0.9791 | 23 |
+| `tau=1.05` | 9.12 | 0 | 1.0946 | 392 |
+| `C=1` | 9.62 | 0 | 1.0883 | 3 |
+| `tau=1.1` | 9.81 | 0 | 1.1252 | 191 |
+| Sparse random | 11.53 | 0 | 1.1805 | **1** |
+
+The initial tolerance had a comparatively modest effect on regret but a large effect on cheap
+proposal cost. Increasing `epsilon_1` from 0.01 to 1.0 reduced mean proposals per query from
+2,100 to 578. Faster tolerance growth (`tau=1.05` or `1.1`) and short rejection patience
+(`C=1` or `10`) reduced proposals further but materially worsened regret. The ablation therefore
+exposes a genuine statistical-computational frontier rather than a universally best parameter.
+
 ## Theorem-suite smoke check
 
 The small configuration in `configs/theory_validation_smoke.yaml` completed end to end. It

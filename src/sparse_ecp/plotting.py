@@ -80,26 +80,45 @@ def plot_fraction(results: pd.DataFrame, output: str | Path, title: str) -> Path
 def plot_scaling(slopes: pd.DataFrame, output: str | Path) -> Path:
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)
-    figure, axis = plt.subplots(figsize=(6.4, 4.5))
-    group_columns = [
-        column
-        for column in ["objective_name", "support_mode", "dimension", "algorithm"]
-        if column in slopes
-    ]
-    for labels, frame in slopes.groupby(group_columns):
-        if not isinstance(labels, tuple):
-            labels = (labels,)
-        label = "/".join(str(value) for value in labels)
-        frame = frame.sort_values("sparsity")
-        axis.plot(frame["sparsity"], frame["fitted_slope"], marker="o", label=label)
+    figure, axis = plt.subplots(figsize=(7.2, 5.2))
+    for algorithm, frame in slopes.groupby("algorithm"):
+        summary = frame.groupby("sparsity")["fitted_slope"].agg(
+            median="median",
+            lower=lambda values: values.quantile(0.25),
+            upper=lambda values: values.quantile(0.75),
+        )
+        x = summary.index.to_numpy(dtype=float)
+        color = COLORS.get(str(algorithm), None)
+        (line,) = axis.plot(
+            x,
+            summary["median"],
+            marker="o",
+            label=str(algorithm),
+            color=color,
+            linewidth=1.8,
+        )
+        band_color = color or line.get_color()
+        axis.fill_between(
+            x,
+            summary["lower"].to_numpy(),
+            summary["upper"].to_numpy(),
+            color=band_color,
+            alpha=0.10,
+        )
     theory = slopes[["sparsity", "theory_slope"]].drop_duplicates().sort_values("sparsity")
-    axis.plot(theory["sparsity"], theory["theory_slope"], "k--", label="minimax theory")
+    axis.plot(
+        theory["sparsity"],
+        theory["theory_slope"],
+        "k--",
+        linewidth=2,
+        label="minimax theory",
+    )
     axis.set_xlabel("Sparsity s")
-    axis.set_ylabel("Fitted log-regret / log-budget slope")
-    axis.set_title("Empirical scaling-law check")
+    axis.set_ylabel("Fitted log-regret / log-budget slope (median; IQR)")
+    axis.set_title("Empirical scaling slopes")
     axis.grid(True, alpha=0.2)
-    axis.legend(frameon=False)
-    figure.tight_layout()
+    axis.legend(frameon=False, fontsize=8, ncol=2)
+    figure.tight_layout(pad=1.2)
     figure.savefig(output, dpi=220)
     plt.close(figure)
     return output

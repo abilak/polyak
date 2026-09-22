@@ -42,6 +42,28 @@ def test_synthetic_parallel_matches_serial(tmp_path):
     pd.testing.assert_frame_equal(serial, parallel)
 
 
+def test_synthetic_uses_configured_pair_reference(tmp_path):
+    config = {
+        "output_dir": str(tmp_path / "paired"),
+        "dimensions": [4],
+        "sparsities": [1],
+        "budgets": [4],
+        "seeds": [0, 1],
+        "objectives": ["cone"],
+        "support_modes": ["unknown"],
+        "pair_reference": "random_baseline",
+        "algorithms": [
+            {"name": "support_random", "label": "random_baseline"},
+            "space_filling",
+        ],
+    }
+    config_path = _write_yaml(tmp_path / "paired.yaml", config)
+    paired_path = run_synthetic(config_path, workers=1)["paired"]
+    paired = pd.read_csv(paired_path)
+    assert set(paired["reference"]) == {"random_baseline"}
+    assert set(paired["competitor"]) == {"space_filling"}
+
+
 def test_biology_parallel_matches_serial(tmp_path):
     prepared_path = tmp_path / "prepared.csv"
     pd.DataFrame(

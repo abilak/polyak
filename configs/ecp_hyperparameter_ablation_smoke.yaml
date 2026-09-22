@@ -1,4 +1,5 @@
 output_dir: results/ecp_hyperparameter_ablation_smoke
+pair_reference: ecp/epsilon_0.01
 workers: 2
 dimensions: [6]
 sparsities: [2]

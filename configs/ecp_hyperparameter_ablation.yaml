@@ -1,5 +1,6 @@
 output_dir: results/ecp_hyperparameter_ablation
 workers: auto
+pair_reference: ecp/epsilon_0.01
 dimensions: [8, 16]
 sparsities: [2, 4]
 budgets: [25, 50, 100, 300]

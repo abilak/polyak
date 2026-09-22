@@ -240,6 +240,7 @@ def _write_bundle(
     output_dir: Path,
     *,
     budgets: list[int] | None = None,
+    pair_reference: str = "sparse_ecp",
 ) -> dict[str, Path]:
     output_dir.mkdir(parents=True, exist_ok=True)
     paths = {
@@ -252,7 +253,9 @@ def _write_bundle(
     run_summary = summarize_runs(results)
     run_summary.to_csv(paths["runs"], index=False)
     aggregate_summary(run_summary).to_csv(paths["aggregate"], index=False)
-    paired_algorithm_summary(run_summary).to_csv(paths["paired"], index=False)
+    paired_algorithm_summary(run_summary, reference=pair_reference).to_csv(
+        paths["paired"], index=False
+    )
     if budgets is not None and {"sparsity", "simple_regret"}.issubset(results.columns):
         slopes = fit_loglog_slopes(results, budgets)
         slope_path = output_dir / "scaling_slopes.csv"
@@ -321,7 +324,12 @@ def run_synthetic(
         ) as executor:
             frames = list(executor.map(_run_synthetic_job, jobs, chunksize=1))
     results = pd.concat(frames, ignore_index=True)
-    paths = _write_bundle(results, output_dir, budgets=budgets)
+    paths = _write_bundle(
+        results,
+        output_dir,
+        budgets=budgets,
+        pair_reference=str(config.get("pair_reference", "sparse_ecp")),
+    )
     representative = results[
         (results["objective_name"] == objective_names[0])
         & (results["support_mode"] == support_modes[0])
