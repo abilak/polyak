@@ -59,7 +59,77 @@ run_ablation() {
     --workers "$workers"
 }
 
+prepare_real_data() {
+  mkdir -p data/raw data/processed data/processed/almanac_panels
+
+  if [[ ! -s data/raw/NCATS_screening_data.csv || ! -s data/raw/ONEIL_screening_data.csv ]]; then
+    .venv/bin/sparse-ecp fetch-examples --raw-dir data/raw
+  fi
+  if [[ ! -s data/processed/NCATS_screening_data.csv ]]; then
+    .venv/bin/sparse-ecp prepare \
+      --input data/raw/NCATS_screening_data.csv \
+      --output data/processed/NCATS_screening_data.csv \
+      --response-kind inhibition
+  fi
+  if [[ ! -s data/processed/ONEIL_screening_data.csv ]]; then
+    .venv/bin/sparse-ecp prepare \
+      --input data/raw/ONEIL_screening_data.csv \
+      --output data/processed/ONEIL_screening_data.csv \
+      --response-kind inhibition
+  fi
+
+  if [[ ! -s data/processed/almanac_panels/almanac_panels_d8.csv \
+     || ! -s data/processed/almanac_panels/almanac_panels_d12.csv \
+     || ! -s data/processed/almanac_panels/almanac_panels_d16.csv \
+     || ! -s data/processed/almanac_panels/almanac_panels_d20.csv ]]; then
+    .venv/bin/sparse-ecp fetch-dataset --name nci_almanac_growth --raw-dir data/raw
+    .venv/bin/sparse-ecp prepare-almanac-panels \
+      --input data/raw/ComboDrugGrowth_Nov2017.csv \
+      --output-dir data/processed/almanac_panels \
+      --sizes 8 12 16 20 \
+      --count 20 \
+      --cell-line MCF7 \
+      --cell-line A549/ATCC \
+      --cell-line K-562
+  fi
+
+  if [[ ! -s data/processed/matbench_steels.csv ]]; then
+    .venv/bin/sparse-ecp fetch-dataset --name matbench_steels --raw-dir data/raw
+    .venv/bin/sparse-ecp prepare-materials \
+      --input data/raw/matbench_steels.json.gz \
+      --output data/processed/matbench_steels.csv \
+      --composition composition \
+      --property "yield strength" \
+      --objective maximize \
+      --task-id steel_yield_strength
+  fi
+  if [[ ! -s data/processed/matbench_expt_gap_target.csv ]]; then
+    .venv/bin/sparse-ecp fetch-dataset --name matbench_expt_gap --raw-dir data/raw
+    .venv/bin/sparse-ecp prepare-materials \
+      --input data/raw/matbench_expt_gap.json.gz \
+      --output data/processed/matbench_expt_gap_target.csv \
+      --composition composition \
+      --property "gap expt" \
+      --objective target \
+      --target 1.34 \
+      --task-id experimental_band_gap_target
+  fi
+  if [[ ! -s data/processed/matbench_perovskites.csv ]]; then
+    .venv/bin/sparse-ecp fetch-dataset --name matbench_perovskites --raw-dir data/raw
+    .venv/bin/sparse-ecp prepare-perovskites \
+      --input data/raw/matbench_perovskites.json.gz \
+      --output data/processed/matbench_perovskites.csv
+  fi
+  if [[ ! -s data/processed/cads_ocm.csv ]]; then
+    .venv/bin/sparse-ecp fetch-dataset --name cads_ocm --raw-dir data/raw
+    .venv/bin/sparse-ecp prepare-ocm \
+      --input data/raw/CADS_high_throughput_OCM.csv \
+      --output data/processed/cads_ocm.csv
+  fi
+}
+
 run_real_data() {
+  prepare_real_data
   .venv/bin/sparse-ecp biology --config configs/biology_ncats_example.yaml --workers "$real_workers"
   .venv/bin/sparse-ecp biology --config configs/biology_oneil_example.yaml --workers "$real_workers"
   .venv/bin/sparse-ecp biology --config configs/biology_almanac_d8.yaml --workers "$real_workers"
@@ -94,6 +164,9 @@ case "$phase" in
   ablation)
     run_ablation
     ;;
+  data)
+    prepare_real_data
+    ;;
   real)
     run_real_data
     ;;
@@ -106,7 +179,7 @@ case "$phase" in
     run_real_data
     ;;
   *)
-    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|real|all}" >&2
+    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|data|real|all}" >&2
     exit 2
     ;;
 esac

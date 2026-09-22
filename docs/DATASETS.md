@@ -4,6 +4,11 @@ The executable registry is `configs/datasets.yaml`.  Raw and processed data are 
 version control; the repository stores acquisition and conversion code, not republished
 third-party datasets.
 
+On a fresh compute-server checkout, `./scripts/run_server_suite.sh data` downloads and prepares
+every public input required by the configured real-data suite. The command is idempotent and
+skips each nonempty prepared output. `./scripts/run_server_suite.sh real` invokes the same
+preparation automatically before launching experiments.
+
 ## SynergyFinder examples
 
 `sparse-ecp fetch-examples` downloads the current Bioconductor package archive and extracts

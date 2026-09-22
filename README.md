@@ -88,9 +88,16 @@ sparse-ecp synthetic --config configs/ecp_hyperparameter_ablation.yaml
 ```
 
 For a Linux compute server, `scripts/run_server_suite.sh` provides setup, verification,
-theory, targeted rate follow-up, benchmark, ablation, and real-data phases. These
+theory, targeted rate follow-up, benchmark, ablation, data preparation, and real-data phases. These
 implementations are CPU-bound;
 the current NumPy/SciPy/scikit-learn stack does not use the GPU.
+
+Raw and prepared third-party tables are intentionally excluded from Git. Prepare all public
+inputs explicitly with `./scripts/run_server_suite.sh data`. The `real` phase also calls this
+idempotent preparation step automatically, so a fresh server checkout downloads and converts
+only files that are missing. The ALMANAC archive is roughly 583 MB; allow additional space for
+its four prepared panel tables. The CADS OCM source terms prohibit redistribution, so that
+table remains local to the server.
 
 All experiment runners parallelize independent task/seed/algorithm runs with
 `--workers N`. Use `--workers auto` for a conservative automatic choice (half the detected
