@@ -99,6 +99,11 @@ only files that are missing. The ALMANAC archive is roughly 583 MB; allow additi
 its four prepared panel tables. The CADS OCM source terms prohibit redistribution, so that
 table remains local to the server.
 
+If a long real-data suite is interrupted, resume it with
+`./scripts/run_server_suite.sh real-resume`. A study is skipped only when its trajectories,
+run summary, aggregate summary, and paired comparison table are all present and nonempty.
+Use the ordinary `real` phase when every study should be recomputed from scratch.
+
 All experiment runners parallelize independent task/seed/algorithm runs with
 `--workers N`. Use `--workers auto` for a conservative automatic choice (half the detected
 logical CPUs, capped at four), or set `workers` in a YAML configuration. The bundled

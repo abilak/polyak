@@ -143,6 +143,48 @@ run_real_data() {
   .venv/bin/sparse-ecp materials --config configs/materials_ocm.yaml --workers "$materials_workers"
 }
 
+result_complete() {
+  local output_dir="$1"
+  [[ -s "$output_dir/trajectories.csv" \
+     && -s "$output_dir/run_summary.csv" \
+     && -s "$output_dir/aggregate_summary.csv" \
+     && -s "$output_dir/paired_algorithm_summary.csv" ]]
+}
+
+run_biology_unless_complete() {
+  local config="$1"
+  local output_dir="$2"
+  if result_complete "$output_dir"; then
+    echo "complete; skipping $output_dir"
+    return
+  fi
+  .venv/bin/sparse-ecp biology --config "$config" --workers "$real_workers"
+}
+
+run_materials_unless_complete() {
+  local config="$1"
+  local output_dir="$2"
+  if result_complete "$output_dir"; then
+    echo "complete; skipping $output_dir"
+    return
+  fi
+  .venv/bin/sparse-ecp materials --config "$config" --workers "$materials_workers"
+}
+
+resume_real_data() {
+  prepare_real_data
+  run_biology_unless_complete configs/biology_ncats_example.yaml results/ncats_triple_example
+  run_biology_unless_complete configs/biology_oneil_example.yaml results/oneil_two_block_example
+  run_biology_unless_complete configs/biology_almanac_d8.yaml results/nci_almanac_d8_panels
+  run_biology_unless_complete configs/biology_almanac_d12.yaml results/nci_almanac_d12_panels
+  run_biology_unless_complete configs/biology_almanac_d16.yaml results/nci_almanac_d16_panels
+  run_biology_unless_complete configs/biology_almanac_d20.yaml results/nci_almanac_d20_panels
+  run_materials_unless_complete configs/materials_steels.yaml results/matbench_steels
+  run_materials_unless_complete configs/materials_bandgap.yaml results/matbench_expt_gap_target
+  run_materials_unless_complete configs/materials_perovskites.yaml results/matbench_perovskites
+  run_materials_unless_complete configs/materials_ocm.yaml results/cads_ocm
+}
+
 case "$phase" in
   setup)
     setup_environment
@@ -171,6 +213,9 @@ case "$phase" in
   real)
     run_real_data
     ;;
+  real-resume)
+    resume_real_data
+    ;;
   all)
     setup_environment
     verify_installation
@@ -180,7 +225,7 @@ case "$phase" in
     run_real_data
     ;;
   *)
-    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|data|real|all}" >&2
+    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|data|real|real-resume|all}" >&2
     exit 2
     ;;
 esac
