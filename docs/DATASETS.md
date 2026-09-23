@@ -21,6 +21,11 @@ rows.  It therefore cannot test replicate noise.  It is suitable for an end-to-e
 illustration, not for the chat's proposed full 16-combination or noisy-measurement validation
 claims.
 
+The two released O'Neil blocks come from different cell lines. Preparation therefore uses
+`cell_line_name` as a task context, yielding two 25-candidate tasks. Pooling them into one task
+creates a duplicated all-zero control point across cell lines and violates the assumption that
+the finite objective is a single-valued function of the optimization coordinates.
+
 ## NCATS malaria pairwise screen
 
 The 2015 study reports 13,910 combination screens and 728,216 measurements, including a

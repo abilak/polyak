@@ -120,7 +120,9 @@ sparse-ecp biology --config configs/biology_ncats_example.yaml
 
 The downloaded two-block O'Neil illustration is run separately with
 `configs/biology_oneil_example.yaml`; it is deliberately labeled as an example rather
-than the full 583-pair replication dataset.
+than the full 583-pair replication dataset. Its two blocks belong to different cell lines;
+the server data phase passes `--context cell_line_name` so they remain two independent tasks
+rather than one inconsistent finite objective.
 
 ## Full biological studies
 

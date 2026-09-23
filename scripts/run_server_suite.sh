@@ -71,12 +71,13 @@ prepare_real_data() {
       --output data/processed/NCATS_screening_data.csv \
       --response-kind inhibition
   fi
-  if [[ ! -s data/processed/ONEIL_screening_data.csv ]]; then
-    .venv/bin/sparse-ecp prepare \
-      --input data/raw/ONEIL_screening_data.csv \
-      --output data/processed/ONEIL_screening_data.csv \
-      --response-kind inhibition
-  fi
+  # The two released O'Neil blocks use different cell lines. Rebuild this
+  # small table on every data pass so older one-task preparations are repaired.
+  .venv/bin/sparse-ecp prepare \
+    --input data/raw/ONEIL_screening_data.csv \
+    --output data/processed/ONEIL_screening_data.csv \
+    --response-kind inhibition \
+    --context cell_line_name
 
   if [[ ! -s data/processed/almanac_panels/almanac_panels_d8.csv \
      || ! -s data/processed/almanac_panels/almanac_panels_d12.csv \
