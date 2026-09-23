@@ -3,7 +3,13 @@ import pytest
 
 from sparse_ecp.domains import SparseBall
 from sparse_ecp.objectives import SparseCone
-from sparse_ecp.optimizers import ECP, RandomSearch, ReplicatedECP
+from sparse_ecp.optimizers import (
+    ECP,
+    RandomSearch,
+    ReplicatedECP,
+    _ecp_filter_accepts,
+    _grow_tolerance,
+)
 from sparse_ecp.spaces import ContinuousOracle, FiniteOracle
 
 
@@ -67,3 +73,12 @@ def test_replicated_ecp_respects_noisy_oracle_call_budget():
     assert len(frame) == 10
     assert frame.iloc[-1]["cumulative_oracle_calls"] == 40
     assert "recommendation_regret" in frame
+
+
+def test_ecp_filter_is_overflow_safe_at_saturated_tolerance():
+    history = np.array([0.0, 1.0])
+    epsilon = _grow_tolerance(np.finfo(float).max, 1.02)
+
+    assert np.isfinite(epsilon)
+    assert _ecp_filter_accepts(history, np.array([1.0, 0.0]), 1.0, epsilon)
+    assert not _ecp_filter_accepts(history, np.array([0.0, 1.0]), 1.0, epsilon)

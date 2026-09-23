@@ -14,6 +14,7 @@ from sklearn.preprocessing import StandardScaler
 from .spaces import Candidate, OracleSpace
 
 FloatArray = NDArray[np.float64]
+_MAX_FLOAT = float(np.finfo(float).max)
 
 
 @dataclass
@@ -105,6 +106,37 @@ def _record(
     if recommendation_value is None:
         recommendation_value = max(trace.values)
     trace.recommendation_values.append(float(recommendation_value))
+
+
+def _grow_tolerance(epsilon: float, factor: float) -> float:
+    """Increase an ECP tolerance without overflowing floating-point storage."""
+    if epsilon >= _MAX_FLOAT / factor:
+        return _MAX_FLOAT
+    return epsilon * factor
+
+
+def _ecp_filter_accepts(
+    history_values: FloatArray,
+    distances: FloatArray,
+    incumbent: float,
+    epsilon: float,
+) -> bool:
+    """Evaluate the ECP envelope inequality without forming ``epsilon * distance``.
+
+    The usual expression can overflow after many tolerance increases, and
+    ``inf * 0`` then becomes NaN. Rearranging the same inequality as a required
+    slope comparison preserves its mathematical limiting behavior.
+    """
+    if not np.all(np.isfinite(distances)):
+        return False
+    improvement_needed = incumbent - history_values
+    active = improvement_needed > 0.0
+    if not np.any(active):
+        return True
+    if np.any(distances[active] <= 0.0):
+        return False
+    required_slope = float(np.max(improvement_needed[active] / distances[active]))
+    return epsilon >= required_slope
 
 
 @dataclass
@@ -199,18 +231,18 @@ class ECP:
                 proposals_this_evaluation += 1
                 total_proposals += 1
                 distances = np.linalg.norm(x_hist - candidate.x, axis=1)
-                accepted = float(np.min(y_hist + epsilon * distances)) >= best_y
+                accepted = _ecp_filter_accepts(y_hist, distances, best_y, epsilon)
                 if accepted:
                     _record(trace, space, candidate, proposals_this_evaluation, epsilon)
                     if candidate.key is not None:
                         evaluated.add(candidate.key)
                     x_history.append(candidate.x)
                     y_history.append(trace.values[-1])
-                    epsilon *= effective_tau
+                    epsilon = _grow_tolerance(epsilon, effective_tau)
                     break
                 rejected_since_growth += 1
                 if rejected_since_growth >= self.rejection_growth:
-                    epsilon *= effective_tau
+                    epsilon = _grow_tolerance(epsilon, effective_tau)
                     rejected_since_growth = 0
         return trace
 
@@ -345,9 +377,12 @@ class ReplicatedECP:
                 proposals_this_evaluation += 1
                 total_proposals += 1
                 distances = np.linalg.norm(x_hist - candidate.x, axis=1)
-                accepted = float(
-                    np.min(observed_hist + beta + epsilon * distances)
-                ) >= lower_incumbent
+                accepted = _ecp_filter_accepts(
+                    observed_hist + beta,
+                    distances,
+                    lower_incumbent,
+                    epsilon,
+                )
                 if accepted:
                     latent = float(space.evaluate(candidate))
                     mean = latent + float(
@@ -369,11 +404,11 @@ class ReplicatedECP:
                     if candidate.key is not None:
                         evaluated.add(candidate.key)
                     x_history.append(candidate.x)
-                    epsilon *= effective_tau
+                    epsilon = _grow_tolerance(epsilon, effective_tau)
                     break
                 rejected_since_growth += 1
                 if rejected_since_growth >= self.rejection_growth:
-                    epsilon *= effective_tau
+                    epsilon = _grow_tolerance(epsilon, effective_tau)
                     rejected_since_growth = 0
         return trace
 
