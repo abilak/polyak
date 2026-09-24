@@ -71,6 +71,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="worker processes (positive integer or conservative 'auto'; overrides the config)",
     )
 
+    hpo = subparsers.add_parser(
+        "ecp-hpo",
+        help="run the defensible UCI kernel-ridge controls from the ECP paper",
+    )
+    hpo.add_argument("--config", required=True)
+    hpo.add_argument(
+        "--workers",
+        default=None,
+        help="worker processes (positive integer or conservative 'auto'; overrides the config)",
+    )
+
     prepare = subparsers.add_parser("prepare", help="prepare a SynergyFinder-style table")
     prepare.add_argument("--input", required=True)
     prepare.add_argument("--output", required=True)
@@ -138,6 +149,10 @@ def build_parser() -> argparse.ArgumentParser:
             "matbench_expt_gap",
             "matbench_perovskites",
             "cads_ocm",
+            "ecp_auto_mpg",
+            "ecp_breast_cancer_wisconsin",
+            "ecp_concrete_slump",
+            "ecp_yacht_hydrodynamics",
         ],
     )
     fetch_data.add_argument("--raw-dir", default="data/raw")
@@ -193,6 +208,10 @@ def main(argv: list[str] | None = None) -> None:
         from .experiments import run_materials
 
         _print_paths(run_materials(args.config, workers=args.workers))
+    elif args.command == "ecp-hpo":
+        from .experiments import run_ecp_hpo
+
+        _print_paths(run_ecp_hpo(args.config, workers=args.workers))
     elif args.command == "prepare":
         data = prepare_synergy_table(
             read_table(args.input),

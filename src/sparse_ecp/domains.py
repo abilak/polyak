@@ -23,6 +23,37 @@ def _uniform_ball(rng: np.random.Generator, dimension: int, radius: float) -> Fl
 
 
 @dataclass(frozen=True)
+class DenseBox:
+    """Uniform sampler on an axis-aligned box."""
+
+    lower: FloatArray
+    upper: FloatArray
+
+    def __post_init__(self) -> None:
+        lower = np.asarray(self.lower, dtype=float)
+        upper = np.asarray(self.upper, dtype=float)
+        if lower.ndim != 1 or upper.shape != lower.shape or lower.size < 1:
+            raise ValueError("lower and upper must be non-empty vectors of equal shape")
+        if not np.isfinite(lower).all() or not np.isfinite(upper).all():
+            raise ValueError("box bounds must be finite")
+        if np.any(upper <= lower):
+            raise ValueError("each upper bound must exceed its lower bound")
+        object.__setattr__(self, "lower", lower)
+        object.__setattr__(self, "upper", upper)
+
+    @property
+    def dimension(self) -> int:
+        return int(self.lower.size)
+
+    def sample(self, rng: np.random.Generator) -> FloatArray:
+        return np.asarray(rng.uniform(self.lower, self.upper), dtype=float)
+
+    @property
+    def diameter(self) -> float:
+        return float(np.linalg.norm(self.upper - self.lower))
+
+
+@dataclass(frozen=True)
 class DenseBall:
     dimension: int
     radius: float = 1.0

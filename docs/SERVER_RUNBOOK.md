@@ -39,12 +39,18 @@ SPARSE_ECP_WORKERS=8 ./scripts/run_server_suite.sh benchmark
 SPARSE_ECP_WORKERS=8 ./scripts/run_server_suite.sh ablation
 SPARSE_ECP_REAL_WORKERS=2 SPARSE_ECP_MATERIALS_WORKERS=1 \
   ./scripts/run_server_suite.sh real
+SPARSE_ECP_HPO_WORKERS=2 ./scripts/run_server_suite.sh ecp-hpo
 ```
 
 The theory phase is the primary theorem-validation battery. The benchmark phase is the broad
 30-problem/100-repetition main-paper comparison. The ablation phase tests epsilon_1, tau, and
 C. The real phase expects the prepared CSVs named by the YAML files to exist under
 `data/processed/`.
+
+The `ecp-hpo` phase downloads four small UCI files and runs the paper's dense 2-D Gaussian
+kernel-ridge protocol with 100 paired repetitions. It is CPU-bound. Start with two workers:
+kernel-ridge fits create dense matrices, and larger worker counts can increase memory pressure.
+This control is intentionally separate from the sparse evidence.
 
 The optional 168-setting stress suite is substantially larger and should be launched only
 after the main runs finish:
@@ -69,6 +75,7 @@ test -f results/paper_main_benchmark/aggregate_summary.csv
 test -f results/ecp_hyperparameter_ablation/aggregate_summary.csv
 test -f results/nci_almanac_d20_panels/aggregate_summary.csv
 test -f results/cads_ocm/aggregate_summary.csv
+test -f results/ecp_uci_hpo/aggregate_summary.csv
 ```
 
 Preserve the entire `results/` directory. The aggregate files alone are not sufficient for

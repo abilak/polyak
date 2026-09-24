@@ -31,6 +31,8 @@ def summarize_runs(results: pd.DataFrame) -> pd.DataFrame:
                 "unique_supports": int(frame["support_id"].nunique()),
             }
         )
+        if "best_mse" in frame:
+            record["final_mse"] = float(last["best_mse"])
         if "total_supports" in frame:
             record["support_coverage"] = float(
                 frame["support_id"].nunique() / int(frame["total_supports"].iloc[0])
@@ -74,6 +76,7 @@ def aggregate_summary(run_summary: pd.DataFrame) -> pd.DataFrame:
         column
         for column in [
             "final_regret",
+            "final_mse",
             "queries_to_90",
             "queries_to_95",
             "queries_to_99",
@@ -139,6 +142,7 @@ def paired_algorithm_summary(
     records = []
     lower_is_better = [
         "final_regret",
+        "final_mse",
         "queries_to_90",
         "queries_to_95",
         "queries_to_99",

@@ -14,6 +14,9 @@ be pooled into one headline number.
    dimensions, known/unknown-support variants, and 100 paired repetitions.
 3. Retrospective sparse-data studies hide measured rows in drug-combination, materials,
    catalyst, and process tables and reveal only the row selected at each round.
+4. A separate ECP-comparability control repeats the paper's dense two-parameter Gaussian
+   kernel-ridge HPO protocol on four defensible UCI datasets. It is not pooled with sparse
+   results and is not evidence for support recovery or sparse minimax rates.
 
 ## 2. Algorithms and ablations
 
@@ -110,3 +113,6 @@ with the preregistered run.
 - Biological results make no clinical safety or efficacy claim.
 - A gain from a fixed support prior is instance-dependent side information, not removal of the
   binomial(d,s) minimax barrier.
+- The UCI HPO controls optimize only `log(alpha)` and `log(sigma)` in a dense 2-D box. Their
+  objective is deterministic on fixed folds and continuous on the compact box, so it fits the
+  ordinary Lipschitz black-box setting, but it does not instantiate the sparse feasible set.

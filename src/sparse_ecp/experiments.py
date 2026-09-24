@@ -13,7 +13,8 @@ import yaml
 from threadpoolctl import threadpool_limits
 
 from .data import PreparedData, load_prepared, robust_across_tasks
-from .domains import DenseBall, HardThresholdedBall, SparseBall
+from .domains import DenseBall, DenseBox, HardThresholdedBall, SparseBall
+from .hpo import make_krr_objective
 from .metrics import (
     aggregate_summary,
     fit_loglog_slopes,
@@ -22,7 +23,7 @@ from .metrics import (
 )
 from .objectives import make_sparse_center, make_sparse_objective
 from .optimizers import make_optimizer
-from .plotting import plot_fraction, plot_regret, plot_scaling
+from .plotting import plot_fraction, plot_hpo_mse, plot_regret, plot_scaling
 from .spaces import ContinuousOracle
 
 _PARALLEL_WORKER = False
@@ -63,6 +64,16 @@ class _MaterialsJob:
     algorithm_spec: str | dict[str, Any]
     budget: int
     dataset_name: str
+
+
+@dataclass(frozen=True)
+class _ECPHPOJob:
+    dataset_name: str
+    data_path: str
+    seed: int
+    algorithm_spec: str | dict[str, Any]
+    budget: int
+    folds: int
 
 
 def _init_parallel_worker() -> None:
@@ -212,6 +223,33 @@ def _run_materials_job(job: _MaterialsJob) -> pd.DataFrame:
         frame["total_supports"] = len(np.unique(oracle.support_ids))
         frame["seed"] = job.seed
         frame["top_1pct_threshold"] = float(np.quantile(oracle.values, 0.99))
+        return frame
+
+
+def _run_ecp_hpo_job(job: _ECPHPOJob) -> pd.DataFrame:
+    with _numeric_thread_context():
+        objective = make_krr_objective(job.dataset_name, job.data_path, job.folds)
+        domain = DenseBox(np.full(2, -1.0), np.full(2, 1.0))
+        oracle = ContinuousOracle(domain, objective)
+        name, _, options = _algorithm_spec(job.algorithm_spec)
+        try:
+            trace = make_optimizer(name, options).run(oracle, job.budget, job.seed)
+        except RuntimeError as error:
+            raise RuntimeError(
+                f"ECP HPO job failed: dataset={job.dataset_name}, "
+                f"algorithm={_algorithm_label(job.algorithm_spec, name)}, "
+                f"seed={job.seed}: {error}"
+            ) from error
+        trace.algorithm = _algorithm_label(job.algorithm_spec, name)
+        frame = trace.to_frame()
+        frame["experiment"] = "ecp_hpo_control"
+        frame["dataset"] = job.dataset_name
+        frame["task_id"] = job.dataset_name
+        frame["support_mode"] = "dense_2d"
+        frame["dimension"] = 2
+        frame["seed"] = job.seed
+        frame["mse"] = -frame["value"]
+        frame["best_mse"] = -frame["best_value"]
         return frame
 
 
@@ -485,4 +523,73 @@ def run_materials(
         output_dir / "fraction_of_optimum.png",
         f"{dataset_name}: retrospective query efficiency",
     )
+    return paths
+
+
+def run_ecp_hpo(
+    config_path: str | Path,
+    *,
+    workers: int | str | None = None,
+) -> dict[str, Path]:
+    """Run the ECP paper's defensible UCI kernel-ridge HPO controls.
+
+    These are dense two-parameter optimization problems. They provide a direct
+    comparison to ECP, but they are intentionally kept separate from the sparse
+    theorem-validation and application evidence.
+    """
+    config = load_config(config_path)
+    output_dir = Path(config.get("output_dir", "results/ecp_uci_hpo"))
+    budget = int(config.get("budget", 50))
+    folds = int(config.get("folds", 3))
+    seeds = [
+        int(value)
+        for value in config.get("seeds", list(range(int(config.get("seed_count", 100)))))
+    ]
+    dataset_paths = config.get("datasets")
+    if not isinstance(dataset_paths, dict) or not dataset_paths:
+        raise ValueError("ECP HPO config needs a non-empty datasets mapping")
+    algorithms = list(
+        config.get(
+            "algorithms",
+            ["dense_ecp", "dense_random", "space_filling", "gp_ucb"],
+        )
+    )
+    jobs = [
+        _ECPHPOJob(
+            dataset_name=str(dataset_name),
+            data_path=str(data_path),
+            seed=seed,
+            algorithm_spec=algorithm_spec,
+            budget=budget,
+            folds=folds,
+        )
+        for dataset_name, data_path in dataset_paths.items()
+        for seed in seeds
+        for algorithm_spec in algorithms
+    ]
+    worker_count = _resolve_workers(
+        config.get("workers", 1) if workers is None else workers,
+        len(jobs),
+    )
+    if worker_count == 1:
+        frames = [_run_ecp_hpo_job(job) for job in jobs]
+    else:
+        with ProcessPoolExecutor(
+            max_workers=worker_count,
+            initializer=_init_parallel_worker,
+        ) as executor:
+            frames = list(executor.map(_run_ecp_hpo_job, jobs, chunksize=1))
+    results = pd.concat(frames, ignore_index=True)
+    paths = _write_bundle(
+        results,
+        output_dir,
+        pair_reference=str(config.get("pair_reference", "dense_ecp")),
+    )
+    for dataset_name in dataset_paths:
+        selected = results[results["dataset"] == str(dataset_name)]
+        paths[f"{dataset_name}_plot"] = plot_hpo_mse(
+            selected,
+            output_dir / f"{dataset_name}_best_mse.png",
+            f"{dataset_name}: Gaussian KRR hyperparameter optimization",
+        )
     return paths

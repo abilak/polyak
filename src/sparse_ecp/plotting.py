@@ -77,6 +77,31 @@ def plot_fraction(results: pd.DataFrame, output: str | Path, title: str) -> Path
     return output
 
 
+def plot_hpo_mse(results: pd.DataFrame, output: str | Path, title: str) -> Path:
+    """Plot the best cross-validation MSE found so far."""
+    output = Path(output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    figure, axis = plt.subplots(figsize=(7.2, 4.8))
+    for algorithm, frame in results.groupby("algorithm"):
+        pivot = frame.pivot_table(index="evaluation", columns="seed", values="best_mse")
+        x = pivot.index.to_numpy()
+        median = pivot.median(axis=1).to_numpy()
+        low = pivot.quantile(0.25, axis=1).to_numpy()
+        high = pivot.quantile(0.75, axis=1).to_numpy()
+        color = COLORS.get(str(algorithm), None)
+        axis.plot(x, median, label=str(algorithm), color=color, linewidth=2)
+        axis.fill_between(x, low, high, color=color, alpha=0.16)
+    axis.set_xlabel("Hyperparameter evaluations")
+    axis.set_ylabel("Best 3-fold CV MSE (median; IQR)")
+    axis.set_title(title)
+    axis.grid(True, alpha=0.2)
+    axis.legend(frameon=False)
+    figure.tight_layout()
+    figure.savefig(output, dpi=220)
+    plt.close(figure)
+    return output
+
+
 def plot_scaling(slopes: pd.DataFrame, output: str | Path) -> Path:
     output = Path(output)
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -1,0 +1,21 @@
+output_dir: results/ecp_uci_hpo
+workers: auto
+
+# Direct ECP-paper comparison control: 2-D dense HPO, not a sparse problem.
+budget: 50
+folds: 3
+seed_count: 100
+pair_reference: dense_ecp
+datasets:
+  auto_mpg: data/raw/auto-mpg.data
+  breast_cancer_wisconsin: data/raw/wdbc.data
+  concrete_slump: data/raw/slump_test.data
+  yacht_hydrodynamics: data/raw/yacht_hydrodynamics.zip
+algorithms:
+  - name: dense_ecp
+    options: {epsilon0: 0.01, tau: 1.01, rejection_growth: 1000}
+  - dense_random
+  - name: space_filling
+    options: {pool_size: 2048}
+  - name: gp_ucb
+    options: {initial_points: 6, pool_size: 2000, refit_interval: 2}

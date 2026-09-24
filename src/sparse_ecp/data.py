@@ -773,6 +773,28 @@ PUBLIC_DOWNLOADS = {
         ),
         "CADS_high_throughput_OCM.csv",
     ),
+    "ecp_auto_mpg": (
+        "https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data",
+        "auto-mpg.data",
+    ),
+    "ecp_breast_cancer_wisconsin": (
+        (
+            "https://archive.ics.uci.edu/ml/machine-learning-databases/"
+            "breast-cancer-wisconsin/wdbc.data"
+        ),
+        "wdbc.data",
+    ),
+    "ecp_concrete_slump": (
+        (
+            "https://archive.ics.uci.edu/ml/machine-learning-databases/"
+            "concrete/slump/slump_test.data"
+        ),
+        "slump_test.data",
+    ),
+    "ecp_yacht_hydrodynamics": (
+        "https://archive.ics.uci.edu/static/public/243/yacht+hydrodynamics.zip",
+        "yacht_hydrodynamics.zip",
+    ),
 }
 
 
@@ -781,6 +803,14 @@ PUBLIC_SHA256 = {
     "matbench_expt_gap": "783e7d1461eb83b00b2f2942da4b95fda5e58a0d1ae26b581c24cf8a82ca75b2",
     "matbench_perovskites": "4641e2417f8ec8b50096d2230864468dfa08278dc9d257c327f65d0305278483",
     "cads_ocm": "b942693b1269abb2113f1ab5c82f798ff68d44b66aadf1b7f99e565a7cb905b2",
+    "ecp_auto_mpg": "48b830e11feee5572525f8f1691ddb9d38d3d7b7063edcd8fca672c2a5e17d8d",
+    "ecp_breast_cancer_wisconsin": (
+        "d606af411f3e5be8a317a5a8b652b425aaf0ff38ca683d5327ffff94c3695f4a"
+    ),
+    "ecp_concrete_slump": "78cea9fbb28ad8fc17f389e216e724dc04642c6c363143e67f6bcb97e74525ee",
+    "ecp_yacht_hydrodynamics": (
+        "aa52b68f88c4bb552187a53ef4c5753fa178f6a36035a3771c5bc04e078487ac"
+    ),
 }
 
 

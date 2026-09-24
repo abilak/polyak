@@ -55,6 +55,20 @@ The optional extended 168-setting benchmark is:
 sparse-ecp synthetic --config configs/synthetic_benchmark_100.yaml
 ```
 
+## ECP-paper UCI controls
+
+The four defensible real-data tasks from ECP are available as a separate dense 2-D comparison:
+
+```bash
+SPARSE_ECP_HPO_WORKERS=2 ./scripts/run_server_suite.sh ecp-hpo
+```
+
+This reproduces the fixed three-fold Gaussian kernel-ridge objective on Auto-MPG, Breast Cancer
+Wisconsin (Diagnostic), Concrete Slump Test, and Yacht Hydrodynamics. Boston Housing is omitted
+because of its documented ethical/validity problems, and Concrete uses only its seven declared
+inputs rather than leaking its other outputs into the predictors. These controls improve direct
+comparability with ECP but do not count as sparse experiments.
+
 ## Theorem-validation battery
 
 ```bash

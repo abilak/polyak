@@ -89,3 +89,29 @@ elements, and four encoded process variables. It is the primary catalyst/process
 The source page prohibits redistribution and requires citation of Nguyen et al., *ACS
 Catalysis* 2020, DOI 10.1021/acscatal.9b04293. The repository downloads it directly for local
 use and keeps both raw and prepared copies out of version control.
+
+## ECP UCI hyperparameter-optimization controls
+
+The ECP paper's real-data block optimizes two Gaussian kernel-ridge parameters rather than a
+sparse scientific design. Four source datasets are included as a separate dense 2-D
+comparability control: Auto-MPG, Breast Cancer Wisconsin (Diagnostic), Concrete Slump Test,
+and Yacht Hydrodynamics. Each is downloaded from the official UCI repository with a pinned
+SHA-256 checksum.
+
+For every dataset, the black-box coordinates are `log(alpha)` and `log(sigma)` in `[-1,1]^2`.
+The score is negative three-fold cross-validation MSE. Feature scaling is fitted inside each
+training fold, so validation rows do not affect the scaler. The folds are deterministic and
+unshuffled, matching the released ECP implementation.
+
+Two deliberate screening decisions matter:
+
+- Boston Housing is omitted. It is deprecated and strongly discouraged by scikit-learn for
+  documented ethical and validity problems.
+- Concrete Slump uses only its seven declared input variables. The released ECP code also uses
+  Flow and Compressive Strength, the other two outputs, as predictors of Slump. That leakage is
+  not reproduced here. Consequently this arm is a corrected control, not an exact numerical
+  replication of the paper's Concrete row.
+
+Breast Cancer Wisconsin is a classification dataset, but the control retains the paper's
+continuous kernel-ridge MSE objective on binary labels. These four tasks test ordinary ECP
+behavior and cross-paper comparability; they do not validate sparse-support assumptions.

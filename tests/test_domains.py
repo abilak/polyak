@@ -1,6 +1,15 @@
 import numpy as np
 
-from sparse_ecp.domains import HardThresholdedBall, SparseBall, SparseBox
+from sparse_ecp.domains import DenseBox, HardThresholdedBall, SparseBall, SparseBox
+
+
+def test_dense_box_sampler_respects_coordinate_bounds():
+    domain = DenseBox(np.array([-1.0, 2.0]), np.array([1.0, 5.0]))
+    draws = np.vstack([domain.sample(np.random.default_rng(seed)) for seed in range(50)])
+    assert domain.dimension == 2
+    assert np.all(draws >= np.array([-1.0, 2.0]))
+    assert np.all(draws <= np.array([1.0, 5.0]))
+    assert domain.diameter == np.sqrt(13.0)
 
 
 def test_sparse_ball_sampler_respects_geometry():

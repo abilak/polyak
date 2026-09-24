@@ -15,6 +15,7 @@ phase="${1:-all}"
 workers="${SPARSE_ECP_WORKERS:-8}"
 real_workers="${SPARSE_ECP_REAL_WORKERS:-2}"
 materials_workers="${SPARSE_ECP_MATERIALS_WORKERS:-1}"
+hpo_workers="${SPARSE_ECP_HPO_WORKERS:-2}"
 python_bin="${PYTHON_BIN:-python3}"
 
 setup_environment() {
@@ -57,6 +58,21 @@ run_ablation() {
   .venv/bin/sparse-ecp synthetic \
     --config configs/ecp_hyperparameter_ablation.yaml \
     --workers "$workers"
+}
+
+prepare_ecp_hpo_data() {
+  mkdir -p data/raw
+  .venv/bin/sparse-ecp fetch-dataset --name ecp_auto_mpg --raw-dir data/raw
+  .venv/bin/sparse-ecp fetch-dataset --name ecp_breast_cancer_wisconsin --raw-dir data/raw
+  .venv/bin/sparse-ecp fetch-dataset --name ecp_concrete_slump --raw-dir data/raw
+  .venv/bin/sparse-ecp fetch-dataset --name ecp_yacht_hydrodynamics --raw-dir data/raw
+}
+
+run_ecp_hpo() {
+  prepare_ecp_hpo_data
+  .venv/bin/sparse-ecp ecp-hpo \
+    --config configs/ecp_uci_hpo.yaml \
+    --workers "$hpo_workers"
 }
 
 prepare_real_data() {
@@ -207,6 +223,12 @@ case "$phase" in
   ablation)
     run_ablation
     ;;
+  ecp-data)
+    prepare_ecp_hpo_data
+    ;;
+  ecp-hpo)
+    run_ecp_hpo
+    ;;
   data)
     prepare_real_data
     ;;
@@ -223,9 +245,10 @@ case "$phase" in
     run_benchmark
     run_ablation
     run_real_data
+    run_ecp_hpo
     ;;
   *)
-    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|data|real|real-resume|all}" >&2
+    echo "usage: $0 {setup|verify|theory|theory-rate-followup|benchmark|benchmark-extended|ablation|ecp-data|ecp-hpo|data|real|real-resume|all}" >&2
     exit 2
     ;;
 esac
