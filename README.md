@@ -156,7 +156,8 @@ method.
 
 Dataset availability, exact scope, and honest limitations are in `docs/DATASETS.md`; the
 preregisterable protocol is in `docs/EXPERIMENTS.md`.  Completed engineering validation
-runs and their deliberately limited interpretation are summarized in `docs/RESULTS.md`.
+runs, including the full ALMANAC and materials studies, and their limitations are summarized
+in `docs/RESULTS.md`.
 
 ## Main implementation choices
 
@@ -187,5 +188,5 @@ coupling of methane. The OCM table is the most closely matched application becau
 ```
 
 Acquisition, preparation, full-run commands, exact encodings, and interpretation limits are
-in `docs/MATERIALS.md`. These configurations default to one worker so they can be run after
-the current ALMANAC job without repeating the earlier laptop overload.
+in `docs/MATERIALS.md`. These configurations default to one worker so they remain safe on
+memory-constrained machines; the server suite can raise the worker count explicitly.

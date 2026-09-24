@@ -1,8 +1,9 @@
 # Completed validation runs
 
-These results verify the implementation and provide preliminary evidence only.  The NCATS
-and O'Neil package objects are small illustrative subsets, and the ALMANAC pilots use too
-few panels/seeds for scientific claims.  The preregistered full configurations are separate.
+These results verify the implementation and report the completed synthetic, ablation,
+theorem-validation, and real-data suites. The NCATS and O'Neil package objects remain small
+illustrative subsets, but the four NCI-ALMANAC panel studies and four materials/catalyst
+studies below are the full configured runs rather than pilots.
 
 ## Main synthetic benchmark
 
@@ -130,6 +131,34 @@ wasteful. `configs/theory_rate_followup.yaml` instead extends the tractable regi
 rate estimates had not stabilized. It is a post-review diagnostic and must remain separate
 from the preregistered full battery.
 
+## Full real-data suite: completion and integrity
+
+The server archive contains all ten configured real-data studies and 29,220 one-row-per-run
+summaries. Every study has all six algorithms for every task/seed pair. An independent audit
+found no duplicate keys, incomplete task/seed blocks, nonfinite primary metrics, out-of-range
+regret/AUC/coverage values, or inconsistencies between proposal totals and reported proposal
+overhead. Every aggregate table has six algorithm rows, and every paired table has all five
+comparisons against Sparse ECP with the expected number of paired runs.
+
+| Study | Tasks | Paired seeds | Effective budget | Run summaries |
+|---|---:|---:|---:|---:|
+| NCATS triple example | 1 | 10 | 300 | 60 |
+| O'Neil two-block example | 2 | 10 | 25 | 120 |
+| NCI-ALMANAC, d = 8 | 60 | 20 | 180 | 7,200 |
+| NCI-ALMANAC, d = 12 | 60 | 20 | 250 | 7,200 |
+| NCI-ALMANAC, d = 16 | 60 | 20 | 300 | 7,200 |
+| NCI-ALMANAC, d = 20 | 60 | 20 | 300 | 7,200 |
+| Matbench steels | 1 | 10 | 200 | 60 |
+| Matbench experimental band gap | 1 | 10 | 300 | 60 |
+| Matbench perovskites | 1 | 10 | 300 | 60 |
+| CADS oxidative methane coupling | 1 | 10 | 300 | 60 |
+| **Total** | **247** | — | — | **29,220** |
+
+Across the ten study-level AUC summaries, Sparse ECP had the best mean rank (1.8), followed
+by candidate-uniform ECP (2.6), maximin space filling (3.1), GP-UCB (3.2), candidate-uniform
+random (4.9), and support-balanced random (5.4). This cross-study rank is descriptive: the
+studies differ greatly in the number of tasks, candidate count, response scale, and budget.
+
 ## NCATS triple-combination example
 
 The complete configured run used the 2,400-point, two-block package example, 300 hidden
@@ -140,7 +169,7 @@ response queries, ten paired seeds, and six algorithms.
 | Sparse ECP | 0.588 | 20.8 | 100% | **0.9735** | 175.0 |
 | Candidate-uniform ECP | 0.661 | **20.7** | 100% | 0.9727 | 174.7 |
 | GP-UCB | **0.000** | 27.2 | 100% | 0.9622 | 2186.6 |
-| Maximin space filling | 2.814 | 101.9 | 90% | 0.9455 | 1993.3 |
+| Maximin space filling | 3.142 | 101.7 | 90% | 0.9446 | 1993.3 |
 | Support-balanced random | 2.708 | 88.0 | 90% | 0.9356 | 1.0 |
 | Candidate-uniform random | 3.640 | 130.0 | 100% | 0.9354 | 1.0 |
 
@@ -149,34 +178,49 @@ two equal-sized supports.  It is an end-to-end higher-order dose-optimization te
 strong support-discovery benchmark.  Proposal counts measure candidates considered, not
 wall-clock-equivalent operations across methods.
 
-## NCI-ALMANAC pilots
+## Full NCI-ALMANAC panel study
 
-The full dose archive was converted into 20 panels at each of d = 8, 12, 16, and 20 for
-MCF7, A549/ATCC, and K-562, producing 240 panel/cell-line tasks.  The initial d = 8 pilot
-used three tasks, two paired seeds, and 50 queries (six paired runs per method).
+The dose archive was converted into 20 independently sampled drug panels at each of
+`d = 8, 12, 16, 20` for MCF7, A549/ATCC, and K-562. This produced 240 panel/cell-line tasks,
+20 paired seeds per task, six algorithms, and 28,800 runs. The table reports mean normalized
+trajectory AUC; larger is better.
 
-| Algorithm | Final regret | Censored queries to 95% | 95% reach rate | Trajectory AUC |
-|---|---:|---:|---:|---:|
-| Sparse ECP | **2.580** | **16.3** | **83%** | **0.9414** |
-| Candidate-uniform ECP | 2.700 | 22.5 | 67% | 0.9253 |
-| Maximin space filling | 9.232 | 27.3 | 50% | 0.9183 |
-| Candidate-uniform random | 9.856 | 41.8 | 33% | 0.8426 |
-| Support-balanced random | 17.253 | 37.0 | 33% | 0.8239 |
-| GP-UCB | 23.070 | 36.3 | 50% | 0.7880 |
+| Panel dimension | Sparse ECP | Candidate-uniform ECP | Space filling | GP-UCB | Uniform random | Support random |
+|---:|---:|---:|---:|---:|---:|---:|
+| 8 | **0.9804** | 0.9800 | 0.9778 | 0.9555 | 0.9321 | 0.9304 |
+| 12 | **0.9676** | 0.9674 | 0.9623 | 0.9338 | 0.9053 | 0.9038 |
+| 16 | 0.9631 | 0.9628 | **0.9686** | 0.9192 | 0.8951 | 0.8935 |
+| 20 | 0.9391 | 0.9416 | **0.9465** | 0.8941 | 0.8782 | 0.8762 |
 
-This pilot motivated no post-hoc algorithm change.  It only confirms that the full study is
-worth running.  Confidence intervals remain wide with six runs.
+For inference across the panel study, each metric difference was first averaged over the 20
+paired seeds within a task, then bootstrapped over the 240 panel/cell-line tasks. Positive
+differences favor Sparse ECP: AUC is `Sparse ECP - competitor`; query and regret differences
+are `competitor - Sparse ECP`.
 
-The robust pilot took the minimum response across the three cell lines for the same d = 8
-panel.  Exact grid intersection left 252 candidates on all three cell lines.  Sparse ECP
-had the best AUC (0.9575), narrowly ahead of maximin space filling (0.9525).  With only two
-seeds this remains a pipeline check, not evidence of a robust-objective win.
+| Competitor | AUC difference (95% CI) | Queries-to-95 difference (95% CI) | Final-regret difference (95% CI) |
+|---|---:|---:|---:|
+| Candidate-uniform ECP | -0.0004 [-0.0020, 0.0011] | -1.5 [-4.5, 1.3] | -0.317 [-0.626, -0.041] |
+| Support-balanced random | **0.0616 [0.0567, 0.0667]** | **75.7 [69.5, 82.2]** | **4.188 [3.598, 4.839]** |
+| Candidate-uniform random | **0.0599 [0.0549, 0.0651]** | **72.8 [66.6, 79.2]** | **3.579 [2.987, 4.229]** |
+| Maximin space filling | -0.0012 [-0.0047, 0.0021] | 0.5 [-5.7, 6.6] | -0.289 [-0.916, 0.285] |
+| GP-UCB | **0.0369 [0.0324, 0.0416]** | **23.4 [17.6, 29.0]** | **-1.876 [-2.411, -1.412]** |
+
+Sparse ECP therefore has a clear anytime advantage over both random baselines and GP-UCB:
+relative to GP-UCB it gains 0.0369 normalized AUC and reaches 95% about 23 queries earlier.
+GP-UCB nevertheless has lower final regret, so the correct conclusion is faster early
+optimization rather than endpoint dominance. Sparse ECP and candidate-uniform ECP are
+indistinguishable in AUC and threshold time, and candidate-uniform ECP has slightly lower
+final regret. The real panel study therefore does **not** demonstrate an additional benefit
+from support-balanced proposals. Space filling crosses over with dimension: Sparse ECP has
+the larger mean AUC at `d = 8, 12`, while space filling leads at `d = 16, 20`; their pooled
+task-cluster AUC difference is unresolved.
 
 ## O'Neil package example
 
 The released illustration contains two tasks with only 25 aggregated candidates each, so a
-50-query budget exhausts each task and every algorithm reaches zero final regret.  Sparse
-ECP and ordinary ECP tie at AUC 0.9406.  This validates ingestion and replicate aggregation;
+50-query configured budget exhausts each task after 25 effective queries and every algorithm
+reaches zero final regret. Sparse ECP and ordinary ECP tie at AUC 0.9406. This validates
+ingestion and replicate aggregation;
 it is not the full 583-pair replication study.
 
 ## NCATS pair-score support-discovery control
@@ -192,24 +236,32 @@ the expected support-information barrier, not evidence against within-support do
 
 Every result directory contains per-query trajectories, one-row-per-run summaries,
 bootstrap aggregates, paired same-seed comparisons against Sparse ECP, and a PNG trajectory
-plot.  Full ALMANAC configurations are provided for all four panel sizes; they are not
-confused with the small pilot reported above.
+plot. Full ALMANAC configurations are provided for all four panel sizes.
 
 Threshold-query aggregates include both reach rate and a budget-censored mean, where a
 failure is assigned budget + 1.  Conditional-on-success means are retained in the CSV but
 are not used alone in the tables above.
 
-## Materials and catalyst pipeline checks
+## Full materials and catalyst studies
 
-Two deliberately tiny, two-seed runs verify the added pipeline; neither is a scientific
-result. On the 30-query steel smoke run, Sparse ECP had trajectory AUC 0.9204 and reached a
-top-1% material after a censored mean of 3.0 queries. Candidate-uniform ECP was essentially
-tied at AUC 0.9220. This table has only 12 distinct elemental supports, so a large separation
-between those variants was not expected.
+Each full study used ten paired seeds and six algorithms. These are single-dataset
+retrospective studies, so their paired intervals quantify seed variation but do not establish
+generalization to new materials datasets.
 
-On the 50-query OCM pilot, Sparse ECP had the best trajectory AUC (0.6911) and reached the
-measured top 1% after a censored mean of 22.5 queries; GP-UCB was second by AUC (0.6483).
-No method reached 95% of the measured response range in either seed. The result is promising
-enough to justify the paired ten-seed run, but two seeds are far too few for a claim of
-superiority. Full configurations are provided and remain unrun while the larger ALMANAC job
-is active.
+| Dataset | Best AUC (method) | Sparse ECP AUC | Sparse final regret | Sparse queries to top 1% |
+|---|---:|---:|---:|---:|
+| Matbench steels | **0.9703 (Sparse ECP)** | **0.9703** | 4.600 | 12.5 |
+| Matbench experimental band gap | **0.9946 (Sparse ECP)** | **0.9946** | 0.012 | 44.5 |
+| Matbench perovskites | **0.9104 (GP-UCB)** | 0.8889 | 0.466 | 55.4 |
+| CADS oxidative methane coupling | **0.8778 (GP-UCB)** | 0.7827 | 2.734 | 80.9 |
+
+On steels, Sparse ECP significantly beats GP-UCB, uniform random, and support-balanced random
+in paired AUC, but its AUC differences from candidate-uniform ECP and space filling are not
+resolved. Space filling and GP-UCB attain zero mean final regret, illustrating again that AUC
+and endpoint regret measure different behavior. On experimental band gap, Sparse ECP has the
+largest mean AUC, but only its small AUC advantage over space filling is resolved; space
+filling reaches the 95% threshold faster while Sparse ECP reaches a top-1% candidate much
+earlier. Sparse ECP and candidate-uniform ECP are exactly identical on perovskites because
+every candidate has its own support in this encoding. On OCM, GP-UCB significantly beats
+Sparse ECP in AUC, final regret, and time to 95%; Sparse ECP significantly beats space filling
+in AUC and top-1% discovery, while comparisons with the remaining methods are unresolved.
